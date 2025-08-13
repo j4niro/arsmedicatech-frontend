@@ -409,7 +409,7 @@ const Schedule = () => {
       />
 
       {/* Debug info */}
-      {process.env.NODE_ENV === 'development' && (
+      {typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development' && (
         <div
           style={{
             position: 'fixed',

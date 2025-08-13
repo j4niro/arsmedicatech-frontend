@@ -25,6 +25,10 @@ create-repos:
 
 REACT_BUILD_ARGS=--build-arg PORT=$(REACT_PORT) --build-arg API_URL=$(API_URL) --build-arg SENTRY_DSN=$(SENTRY_DSN)
 docker-react:
+	@if echo "$(API_URL)" | grep -q "localhost"; then \
+	  echo "Error: API_URL is set to localhost"; \
+	  exit 1; \
+	fi
 	docker build $(REACT_BUILD_ARGS) -t $(DOCKER_REGISTRY)/$(REACT_IMAGE):$(REACT_VERSION) -f Dockerfile.react .
 	docker push $(DOCKER_REGISTRY)/$(REACT_IMAGE):$(REACT_VERSION)
 	kubectl rollout restart deployment $(REACT_DEPLOYMENT) --namespace=$(NAMESPACE)
