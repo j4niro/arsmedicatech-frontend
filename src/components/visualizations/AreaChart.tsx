@@ -43,8 +43,12 @@ export default function AreaChart({
     const y = d3
       .scaleLinear()
       .domain([
-        lowerBound !== undefined && lowerBound !== '' ? lowerBound : d3.min(allParsedPoints, d => d.value as number) ?? 0,
-        upperBound !== undefined && upperBound !== '' ? upperBound : d3.max(allParsedPoints, d => d.value as number) ?? 1,
+        lowerBound !== undefined && lowerBound !== ''
+          ? lowerBound
+          : (d3.min(allParsedPoints, d => d.value as number) ?? 0),
+        upperBound !== undefined && upperBound !== ''
+          ? upperBound
+          : (d3.max(allParsedPoints, d => d.value as number) ?? 1),
       ])
       .nice()
       .range([height, 0]);

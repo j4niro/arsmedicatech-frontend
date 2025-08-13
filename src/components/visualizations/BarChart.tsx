@@ -42,7 +42,9 @@ export default function BarChart({
       .scaleLinear()
       .domain([
         lowerBound !== undefined && lowerBound !== '' ? lowerBound : 0,
-        upperBound !== undefined && upperBound !== '' ? upperBound : d3.max(allPoints, d => d.value ?? 0) ?? 1,
+        upperBound !== undefined && upperBound !== ''
+          ? upperBound
+          : (d3.max(allPoints, d => d.value ?? 0) ?? 1),
       ])
       .nice()
       .range([height, 0]);

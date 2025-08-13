@@ -248,10 +248,10 @@ describe('OptimalTable Component', () => {
     // Use getAllByText to get all instances and check that they exist
     const mgUnits = screen.getAllByText('(mg)');
     const gUnits = screen.getAllByText('(g)');
-    
+
     expect(mgUnits.length).toBeGreaterThan(0);
     expect(gUnits.length).toBeGreaterThan(0);
-    
+
     // Verify that units appear in headers (not just in table cells)
     const headers = screen.getAllByRole('columnheader');
     const headerText = headers.map(header => header.textContent).join(' ');

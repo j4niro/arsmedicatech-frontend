@@ -50,8 +50,12 @@ export default function ScatterChart({
     const y = d3
       .scaleLinear()
       .domain([
-        lowerBound !== undefined && lowerBound !== '' ? lowerBound : d3.min(allParsedPoints, d => d.value) ?? 0,
-        upperBound !== undefined && upperBound !== '' ? upperBound : d3.max(allParsedPoints, d => d.value) ?? 1,
+        lowerBound !== undefined && lowerBound !== ''
+          ? lowerBound
+          : (d3.min(allParsedPoints, d => d.value) ?? 0),
+        upperBound !== undefined && upperBound !== ''
+          ? upperBound
+          : (d3.max(allParsedPoints, d => d.value) ?? 1),
       ])
       .nice()
       .range([height, 0]);

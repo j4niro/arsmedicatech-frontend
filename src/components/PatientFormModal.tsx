@@ -160,14 +160,14 @@ export function PatientFormModal({
         <div className="grid grid-cols-2 gap-4">
           <PhoneInput
             value={formData.phone}
-            onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+            onChange={value => setFormData(prev => ({ ...prev, phone: value }))}
             label="Phone"
             placeholder="Enter phone number"
           />
 
           <EmailInput
             value={formData.email}
-            onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+            onChange={value => setFormData(prev => ({ ...prev, email: value }))}
             label="Email"
             placeholder="Enter email address"
           />

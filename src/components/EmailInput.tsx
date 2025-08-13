@@ -13,9 +13,9 @@ const EmailInput: React.FC<EmailInputProps> = ({
   value,
   onChange,
   required = false,
-  label = "Email",
-  placeholder = "Enter email address",
-  className = ""
+  label = 'Email',
+  placeholder = 'Enter email address',
+  className = '',
 }) => {
   const [error, setError] = useState<string>('');
   const [touched, setTouched] = useState<boolean>(false);
@@ -24,7 +24,10 @@ const EmailInput: React.FC<EmailInputProps> = ({
     if (required && !email.trim()) {
       return 'Email is required';
     }
-    if (email.trim() && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    if (
+      email.trim() &&
+      !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+    ) {
       return 'Invalid email format';
     }
     return '';
@@ -33,7 +36,7 @@ const EmailInput: React.FC<EmailInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
-    
+
     if (touched) {
       const validationError = validateEmail(newValue);
       setError(validationError);
@@ -43,7 +46,7 @@ const EmailInput: React.FC<EmailInputProps> = ({
   const handleBlur = () => {
     setTouched(true);
     const validationError = validateEmail(value);
-    console.log('Validation error:', validationError); 
+    console.log('Validation error:', validationError);
     setError(validationError);
   };
 
@@ -61,14 +64,10 @@ const EmailInput: React.FC<EmailInputProps> = ({
         onBlur={handleBlur}
         placeholder={placeholder}
         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          hasError 
-            ? 'border-red-500 focus:ring-red-500' 
-            : 'border-gray-300'
+          hasError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
         }`}
       />
-      {hasError && (
-        <p className="text-red-500 text-sm mt-1">{error}</p>
-      )}
+      {hasError && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };
