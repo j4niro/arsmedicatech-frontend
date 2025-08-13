@@ -38,6 +38,7 @@ import VideoRoom from './components/VideoRoom';
 import { API_URL } from './env_vars';
 import { usePluginRoutes } from './hooks/usePluginRoutes';
 import Administration from './pages/Administration';
+import Education from './pages/Education';
 import FileUpload from './pages/FileUpload';
 import Organization from './pages/Organization';
 import RoleDescriptions from './pages/RoleDescriptions';
@@ -325,6 +326,8 @@ const baseRoutes: PluginRoute[] = [
   { path: 'about/roles', element: <RoleDescriptions /> },
 
   { path: 'admin', element: <Administration /> },
+
+  { path: 'education/:id', element: <Education /> },
 ];
 
 function App() {

@@ -567,4 +567,22 @@ export const adminAPI = {
     apiService.getAPI(`/admin/administrators/${organizationId}`),
 };
 
+// Education API operations
+export const educationAPI = {
+  // Get education artifact by ID
+  getById: (artifactId: string) =>
+    apiService.getAPI(`/education/${artifactId}`),
+
+  // Get all education artifacts
+  getAll: () => apiService.getAPI('/education'),
+
+  // Search education artifacts
+  search: (query: string) =>
+    apiService.getAPI(`/education/search?q=${encodeURIComponent(query)}`),
+
+  // Get education artifacts by category
+  getByCategory: (category: string) =>
+    apiService.getAPI(`/education/category/${category}`),
+};
+
 export default apiService;
