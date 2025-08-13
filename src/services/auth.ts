@@ -1,4 +1,5 @@
 import { API_URL } from '../env_vars';
+import logger from '../services/logging';
 
 class AuthService {
   token: string | null;
@@ -115,23 +116,56 @@ class AuthService {
     // TODO: What was this even for? if (!this.token) {return null;}
 
     try {
+      logger.debug(
+        'AuthService - Attempting to get current user from:',
+        `${API_URL}/api/auth/me`
+      );
+
       const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: this.buildAuthHeaders(),
         credentials: 'include',
       });
 
+      logger.debug(
+        'AuthService - getCurrentUser response status:',
+        response.status
+      );
+
       if (response.ok) {
         const data = await response.json();
+        logger.debug('AuthService - getCurrentUser success, user data:', data);
         this.user = data.user;
         localStorage.setItem('user', JSON.stringify(this.user));
         return this.user;
       } else {
+        // Log the error response for debugging
+        const errorData = await response.text();
+        logger.warn(
+          'AuthService - getCurrentUser failed with status:',
+          response.status,
+          'Response:',
+          errorData
+        );
+
         // Token might be invalid, clear it
-        this.logout();
+        if (response.status === 401 || response.status === 403) {
+          logger.debug(
+            'AuthService - Clearing invalid token due to auth error'
+          );
+          this.logout();
+        }
         return null;
       }
     } catch (error) {
-      console.error('Get current user error:', error);
+      logger.error('AuthService - getCurrentUser network error:', error);
+
+      // Check if it's a network error (like CORS, connection refused, etc.)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        logger.error(
+          'AuthService - Network fetch error, likely CORS or connection issue'
+        );
+      }
+
       return null;
     }
   }

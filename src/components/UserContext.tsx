@@ -42,17 +42,52 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const currentUser = await authService.getCurrentUser();
-      console.debug('getCurrentUser result:', currentUser);
-      if (currentUser) {
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
+      // Add timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        logger.warn(
+          'UserContext - Auth check timed out after 10 seconds, setting loading to false'
+        );
+        setIsLoading(false);
+        // Don't clear user data on timeout, just stop loading
+      }, 10000); // 10 second timeout
+
+      try {
+        logger.debug('UserContext - Starting auth check...');
+        const currentUser = await authService.getCurrentUser();
+        logger.debug('UserContext - getCurrentUser result:', currentUser);
+
+        clearTimeout(timeoutId); // Clear timeout on success
+
+        if (currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+          logger.debug('UserContext - User authenticated successfully');
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+          logger.debug(
+            'UserContext - No user found, setting as unauthenticated'
+          );
+        }
+      } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout on error
+        logger.error('UserContext - Error during auth check:', error);
+
+        // On error, assume user is not authenticated but don't clear existing user data
+        // This prevents the app from getting stuck in loading state
         setIsAuthenticated(false);
+        logger.debug(
+          'UserContext - Auth check failed, setting as unauthenticated'
+        );
+      } finally {
+        // Always set loading to false, regardless of success/failure
+        setIsLoading(false);
+        logger.debug(
+          'UserContext - Auth check completed, loading set to false'
+        );
       }
-      setIsLoading(false);
     };
+
     checkAuth();
   }, []);
 

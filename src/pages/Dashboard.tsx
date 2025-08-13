@@ -205,6 +205,7 @@ interface UserData {
 const Dashboard = () => {
   const { user, isAuthenticated, setUser, isLoading: userLoading } = useUser();
   const [showLogin, setShowLogin] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const {
     isPopupOpen,
     showSignupPopup,
@@ -213,6 +214,51 @@ const Dashboard = () => {
   const [usersExist, setUsersExist] = useState<boolean | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Additional timeout fallback for loading state
+  useEffect(() => {
+    if (userLoading) {
+      const timeoutId = setTimeout(() => {
+        logger.warn(
+          'Dashboard - Loading timeout reached, forcing loading state to false'
+        );
+        setLoadingTimeout(true);
+      }, 15000); // 15 second timeout as backup
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [userLoading]);
+
+  // Network connectivity check
+  useEffect(() => {
+    const checkNetworkConnectivity = async () => {
+      try {
+        logger.debug('Dashboard - Testing network connectivity to API');
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          method: 'HEAD', // Just check if endpoint is reachable
+          mode: 'cors',
+        });
+        logger.debug(
+          'Dashboard - Network connectivity test result:',
+          response.status
+        );
+      } catch (error) {
+        logger.error('Dashboard - Network connectivity test failed:', error);
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          logger.error(
+            'Dashboard - This appears to be a CORS or network configuration issue'
+          );
+        }
+      }
+    };
+
+    // Only run this check if we're having loading issues
+    if (userLoading) {
+      checkNetworkConnectivity();
+    }
+  }, [userLoading, API_URL]);
 
   // Custom hideSignupPopup that also clears auth query parameter
   const hideSignupPopup = () => {
@@ -239,6 +285,7 @@ const Dashboard = () => {
   logger.debug('Dashboard render - user:', user);
   logger.debug('Dashboard render - isAuthenticated:', isAuthenticated);
   logger.debug('Dashboard render - userLoading:', userLoading);
+  logger.debug('Dashboard render - API_URL:', API_URL);
 
   // Track authentication state changes
   useEffect(() => {
@@ -246,6 +293,7 @@ const Dashboard = () => {
       user,
       isAuthenticated,
       userLoading,
+      timestamp: new Date().toISOString(),
     });
   }, [user, isAuthenticated, userLoading]);
 
@@ -324,7 +372,7 @@ const Dashboard = () => {
     }
   };
 
-  if (userLoading) {
+  if (userLoading && !loadingTimeout) {
     logger.debug('Dashboard - showing loading state');
     return (
       <div className="loading-container">
@@ -332,6 +380,13 @@ const Dashboard = () => {
         <p>Loading...</p>
       </div>
     );
+  }
+
+  if (loadingTimeout) {
+    logger.debug(
+      'Dashboard - showing timeout fallback, proceeding without user data'
+    );
+    // Continue with the component even if loading timed out
   }
 
   if (isAuthenticated && user) {
