@@ -64,6 +64,22 @@ module.exports = (env = {}) => {
           process.env.NODE_ENV || 'development'
         ),
         'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN || ''),
+        'process.env.REACT_APP_API_URL': JSON.stringify(
+          process.env.REACT_APP_API_URL || process.env.API_URL || 'http://127.0.0.1:3123'
+        ),
+        'process.env.REACT_APP_SENTRY_DSN': JSON.stringify(
+          process.env.REACT_APP_SENTRY_DSN || process.env.SENTRY_DSN || ''
+        ),
+        // Define process object for browser environment
+        'process': JSON.stringify({
+          env: {
+            API_URL: process.env.API_URL || 'http://127.0.0.1:3123',
+            NODE_ENV: process.env.NODE_ENV || 'development',
+            SENTRY_DSN: process.env.SENTRY_DSN || '',
+            REACT_APP_API_URL: process.env.REACT_APP_API_URL || process.env.API_URL || 'http://127.0.0.1:3123',
+            REACT_APP_SENTRY_DSN: process.env.REACT_APP_SENTRY_DSN || process.env.SENTRY_DSN || '',
+          }
+        }),
       })
     );
     console.log('[webpack] [PROD] Using environment variables directly');

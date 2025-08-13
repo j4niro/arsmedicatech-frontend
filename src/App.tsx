@@ -72,7 +72,7 @@ function Home() {
   // [AMT-035] User Onboarding Flows
   // This should load when the user first logs in and then update the state to not run again
   // And during e2e testing, it should always be disabled.
-  //const isTestMode = process.env.NODE_ENV === 'test' || process.env.DISABLE_TOUR === 'true';
+  //const isTestMode = (typeof process !== 'undefined' && process.env && (process.env.NODE_ENV === 'test' || process.env.DISABLE_TOUR === 'true')) || false;
   const [runTour, setRunTour] = useState(!isTestMode);
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
