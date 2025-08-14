@@ -33,9 +33,18 @@ const GOOGLE_LOGO =
 
 const DEBUG = getEnvVar('NODE_ENV') === 'development';
 
+// Demo mode flag - allows unauthenticated access to certain endpoints
+const DEMO_MODE =
+  getEnvVar('DEMO_MODE') === 'true' ||
+  getEnvVar('REACT_APP_DEMO_MODE') === 'true' ||
+  API_URL.includes('demo.arsmedicatech.com');
+
+console.log('DEMO_MODE:', DEMO_MODE);
+
 export {
   API_URL,
   DEBUG,
+  DEMO_MODE,
   GOOGLE_LOGO,
   LIVE_KIT_SERVER_URL,
   LIVE_KIT_TOKEN_URL,

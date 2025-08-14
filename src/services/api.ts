@@ -1,4 +1,4 @@
-import { API_URL, LIVE_KIT_TOKEN_URL } from '../env_vars';
+import { API_URL, DEMO_MODE, LIVE_KIT_TOKEN_URL } from '../env_vars';
 import authService from './auth';
 import logger from './logging';
 
@@ -12,29 +12,39 @@ class ApiService {
   }
 
   // Helper method to get headers with authentication
-  getHeaders() {
+  getHeaders(requireAuth: boolean = true) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
-    // Add auth token if available
-    const token = authService.getToken();
-    logger.debug('API getHeaders - token available:', !!token);
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-      logger.debug('API getHeaders - Authorization header set');
+    // Add auth token if available and required
+    if (requireAuth) {
+      const token = authService.getToken();
+      logger.debug('API getHeaders - token available:', !!token);
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        logger.debug('API getHeaders - Authorization header set');
+      } else {
+        logger.debug('API getHeaders - No token available');
+      }
     } else {
-      logger.debug('API getHeaders - No token available');
+      logger.debug(
+        'API getHeaders - Authentication not required for this endpoint'
+      );
     }
 
     return headers;
   }
 
   // Generic request method
-  async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+  async request(
+    endpoint: string,
+    options: RequestInit = {},
+    requireAuth: boolean = true
+  ): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(requireAuth),
       credentials: 'include' as RequestCredentials,
       ...options,
     };
@@ -42,6 +52,7 @@ class ApiService {
     logger.debug('API request - URL:', url);
     logger.debug('API request - Method:', options.method || 'GET');
     logger.debug('API request - Headers:', config.headers);
+    logger.debug('API request - Auth required:', requireAuth);
 
     try {
       // Add timeout for requests (30 seconds for LLM requests, 10 seconds for others)
@@ -61,8 +72,8 @@ class ApiService {
       logger.debug('API request - Response data:', data);
 
       if (!response.ok) {
-        // Handle authentication errors
-        if (response.status === 401) {
+        // Handle authentication errors only if auth is required
+        if (response.status === 401 && requireAuth) {
           // Token might be expired, try to refresh or logout
           await authService.logout();
           throw new Error('Authentication required. Please log in again.');
@@ -81,39 +92,55 @@ class ApiService {
   }
 
   // GET request
-  async get(endpoint: string): Promise<any> {
-    return this.request(endpoint, { method: 'GET' });
+  async get(endpoint: string, requireAuth: boolean = true): Promise<any> {
+    return this.request(endpoint, { method: 'GET' }, requireAuth);
   }
 
   // GET request with API prefix
-  async getAPI(endpoint: string): Promise<any> {
-    return this.request('/api' + endpoint, { method: 'GET' });
+  async getAPI(endpoint: string, requireAuth: boolean = true): Promise<any> {
+    return this.request('/api' + endpoint, { method: 'GET' }, requireAuth);
   }
 
   // POST request
-  async post(endpoint: string, data: any): Promise<any> {
-    return this.request(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async post(
+    endpoint: string,
+    data: any,
+    requireAuth: boolean = true
+  ): Promise<any> {
+    return this.request(
+      endpoint,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      requireAuth
+    );
   }
 
   // POST request with API prefix
-  async postAPI(endpoint: string, data: any): Promise<any> {
+  async postAPI(
+    endpoint: string,
+    data: any,
+    requireAuth: boolean = true
+  ): Promise<any> {
     // If data is FormData, do not stringify and do not set Content-Type
     const isFormData =
       typeof FormData !== 'undefined' && data instanceof FormData;
-    let headers = this.getHeaders();
+    let headers = this.getHeaders(requireAuth);
     if (isFormData) {
       // Remove Content-Type so browser sets it with boundary
       const { ['Content-Type']: _, ...rest } = headers;
       headers = rest;
     }
-    return this.request('/api' + endpoint, {
-      method: 'POST',
-      body: isFormData ? data : JSON.stringify(data),
-      headers,
-    });
+    return this.request(
+      '/api' + endpoint,
+      {
+        method: 'POST',
+        body: isFormData ? data : JSON.stringify(data),
+        headers,
+      },
+      requireAuth
+    );
   }
 
   // PUT request
@@ -268,7 +295,83 @@ class ApiService {
 
   // Lab Results API
   async getLabResults(): Promise<any> {
-    return this.getAPI('/lab_results');
+    // Lab results can be large and take time to process, so use longer timeout
+    const maxRetries = 3;
+    const baseTimeout = 30000; // 30 seconds for lab results
+
+    // In demo mode, don't require authentication for lab results
+    const requireAuth = !DEMO_MODE;
+    logger.debug(
+      `API getLabResults - Demo mode: ${DEMO_MODE}, Auth required: ${requireAuth}`
+    );
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.debug(`API getLabResults - Attempt ${attempt}/${maxRetries}`);
+
+        // Use custom timeout for lab results
+        const url = `${this.baseURL}/api/lab_results`;
+        const config = {
+          headers: this.getHeaders(requireAuth),
+          credentials: 'include' as RequestCredentials,
+        };
+
+        logger.debug('API getLabResults - URL:', url);
+        logger.debug('API getLabResults - Auth required:', requireAuth);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), baseTimeout);
+
+        const response = await fetch(url, {
+          ...config,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        logger.debug('API getLabResults - Response status:', response.status);
+
+        if (!response.ok) {
+          if (response.status === 401 && requireAuth) {
+            await authService.logout();
+            throw new Error('Authentication required. Please log in again.');
+          }
+          const errorData = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status}, message: ${errorData}`
+          );
+        }
+
+        const data = await response.json();
+        logger.debug('API getLabResults - Success on attempt', attempt);
+        return data;
+      } catch (error) {
+        logger.warn(`API getLabResults - Attempt ${attempt} failed:`, error);
+
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (attempt === maxRetries) {
+            throw new Error(
+              'Request timed out after multiple attempts. Please try again.'
+            );
+          }
+          // Wait before retrying with exponential backoff
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+          logger.debug(`API getLabResults - Waiting ${delay}ms before retry`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        if (attempt === maxRetries) {
+          throw error; // Re-throw on final attempt
+        }
+
+        // For other errors, wait before retrying
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 3000);
+        logger.debug(`API getLabResults - Waiting ${delay}ms before retry`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error('Failed to fetch lab results after multiple attempts');
   }
 
   // Extract entities from encounter notes
