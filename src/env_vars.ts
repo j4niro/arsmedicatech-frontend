@@ -1,15 +1,36 @@
 //const API_URL = 'https://demo.arsmedicatech.com';
 //const API_URL = process.env.API_URL || 'http://localhost:3123';
 
+// Debug logging
+console.log('=== ENV_VARS DEBUG ===');
+console.log('typeof process:', typeof process);
+console.log('process:', process);
+console.log('process.env:', process.env);
+console.log('process.env.API_URL:', process.env?.API_URL);
+console.log('process.env.REACT_APP_API_URL:', process.env?.REACT_APP_API_URL);
+
 // Safely access process.env with fallbacks
 const getEnvVar = (key: string, fallback: string = ''): string => {
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
+  console.log(`getEnvVar called with key: ${key}`);
+  console.log(`process.env[${key}]:`, process.env?.[key]);
+
+  if (
+    typeof process !== 'undefined' &&
+    process.env &&
+    process.env[key] !== undefined
+  ) {
+    const value = process.env[key];
+    console.log(`Value for ${key}:`, value, 'Type:', typeof value);
+    // Handle both string and undefined values
+    return value !== undefined ? String(value) : fallback;
   }
+  console.log(`Returning fallback for ${key}:`, fallback);
   return fallback;
 };
 
 const API_URL = getEnvVar('API_URL') || getEnvVar('REACT_APP_API_URL') || '';
+console.log('Final API_URL:', API_URL);
+
 if (!API_URL) {
   throw new Error('API_URL environment variable is not set');
 }
