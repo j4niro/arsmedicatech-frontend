@@ -75,6 +75,9 @@ module.exports = (env = {}) => {
     ),
     'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN || ''),
     'process.env.DEMO_MODE': JSON.stringify(process.env.DEMO_MODE || 'false'),
+    'process.env.PERFORMANCE_MONITORING': JSON.stringify(
+      process.env.PERFORMANCE_MONITORING || 'true'
+    ),
     'process.env.REACT_APP_API_URL': JSON.stringify(
       process.env.REACT_APP_API_URL ||
         process.env.API_URL ||
@@ -86,6 +89,11 @@ module.exports = (env = {}) => {
     'process.env.REACT_APP_DEMO_MODE': JSON.stringify(
       process.env.REACT_APP_DEMO_MODE || process.env.DEMO_MODE || 'false'
     ),
+    'process.env.REACT_APP_PERFORMANCE_MONITORING': JSON.stringify(
+      process.env.REACT_APP_PERFORMANCE_MONITORING ||
+        process.env.PERFORMANCE_MONITORING ||
+        'true'
+    ),
     // Define the process object itself for browser environment
     process: JSON.stringify({
       env: {
@@ -93,6 +101,7 @@ module.exports = (env = {}) => {
         NODE_ENV: process.env.NODE_ENV || 'development',
         SENTRY_DSN: process.env.SENTRY_DSN || '',
         DEMO_MODE: process.env.DEMO_MODE || 'false',
+        PERFORMANCE_MONITORING: process.env.PERFORMANCE_MONITORING || 'true',
         REACT_APP_API_URL:
           process.env.REACT_APP_API_URL ||
           process.env.API_URL ||
@@ -101,6 +110,10 @@ module.exports = (env = {}) => {
           process.env.REACT_APP_SENTRY_DSN || process.env.SENTRY_DSN || '',
         REACT_APP_DEMO_MODE:
           process.env.REACT_APP_DEMO_MODE || process.env.DEMO_MODE || 'false',
+        REACT_APP_PERFORMANCE_MONITORING:
+          process.env.REACT_APP_PERFORMANCE_MONITORING ||
+          process.env.PERFORMANCE_MONITORING ||
+          'true',
       },
     }),
   };

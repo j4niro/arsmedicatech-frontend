@@ -115,6 +115,9 @@ class AuthService {
   async getCurrentUser(): Promise<any> {
     // TODO: What was this even for? if (!this.token) {return null;}
 
+    const startTime = performance.now();
+    logger.info('AuthService - getCurrentUser started', { startTime });
+
     try {
       logger.debug(
         'AuthService - Attempting to get current user from:',
@@ -126,26 +129,54 @@ class AuthService {
         credentials: 'include',
       });
 
+      const responseTime = performance.now();
+      const responseDuration = responseTime - startTime;
+
       logger.debug(
         'AuthService - getCurrentUser response status:',
         response.status
       );
+      logger.info('AuthService - Response received', {
+        responseDuration: responseDuration.toFixed(2),
+        startTime,
+        responseTime,
+        status: response.status,
+      });
 
       if (response.ok) {
         const data = await response.json();
+        const parseTime = performance.now();
+        const parseDuration = parseTime - responseTime;
+        const totalDuration = parseTime - startTime;
+
         logger.debug('AuthService - getCurrentUser success, user data:', data);
+        logger.info('AuthService - Request completed successfully', {
+          responseDuration: responseDuration.toFixed(2),
+          parseDuration: parseDuration.toFixed(2),
+          totalDuration: totalDuration.toFixed(2),
+          startTime,
+          responseTime,
+          parseTime,
+        });
+
         this.user = data.user;
         localStorage.setItem('user', JSON.stringify(this.user));
         return this.user;
       } else {
         // Log the error response for debugging
         const errorData = await response.text();
+        const errorTime = performance.now();
+        const totalDuration = errorTime - startTime;
+
         logger.warn(
-          'AuthService - getCurrentUser failed with status:',
-          response.status,
-          'Response:',
-          errorData
+          `AuthService - getCurrentUser failed with status: ${response.status}, Response: ${errorData}`
         );
+        logger.info('AuthService - Request failed', {
+          totalDuration: totalDuration.toFixed(2),
+          startTime,
+          errorTime,
+          status: response.status,
+        });
 
         // Token might be invalid, clear it
         if (response.status === 401 || response.status === 403) {
@@ -157,7 +188,16 @@ class AuthService {
         return null;
       }
     } catch (error) {
+      const errorTime = performance.now();
+      const totalDuration = errorTime - startTime;
+
       logger.error('AuthService - getCurrentUser network error:', error);
+      logger.info('AuthService - Network error occurred', {
+        totalDuration: totalDuration.toFixed(2),
+        startTime,
+        errorTime,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       // Check if it's a network error (like CORS, connection refused, etc.)
       if (error instanceof TypeError && error.message.includes('fetch')) {

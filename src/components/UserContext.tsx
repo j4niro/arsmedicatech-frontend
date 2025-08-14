@@ -33,6 +33,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authCheckStartTime, setAuthCheckStartTime] = useState<number>(0);
 
   // Debug logging for state changes
   useEffect(() => {
@@ -42,19 +43,34 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const startTime = performance.now();
+      setAuthCheckStartTime(startTime);
+      logger.info('UserContext - Starting auth check', { startTime });
+
       // Add timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
+        const timeoutTime = performance.now();
+        const duration = timeoutTime - startTime;
         logger.warn(
-          'UserContext - Auth check timed out after 10 seconds, setting loading to false'
+          'UserContext - Auth check timed out after 60 seconds, setting loading to false',
+          { duration: duration.toFixed(2), startTime, timeoutTime }
         );
         setIsLoading(false);
         // Don't clear user data on timeout, just stop loading
-      }, 10000); // 10 second timeout
+      }, 60000); // 60 second timeout to catch the full delay
 
       try {
         logger.debug('UserContext - Starting auth check...');
         const currentUser = await authService.getCurrentUser();
+        const successTime = performance.now();
+        const duration = successTime - startTime;
+
         logger.debug('UserContext - getCurrentUser result:', currentUser);
+        logger.info('UserContext - Auth check completed successfully', {
+          duration: duration.toFixed(2),
+          startTime,
+          successTime,
+        });
 
         clearTimeout(timeoutId); // Clear timeout on success
 
@@ -70,8 +86,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           );
         }
       } catch (error) {
+        const errorTime = performance.now();
+        const duration = errorTime - startTime;
+
         clearTimeout(timeoutId); // Clear timeout on error
         logger.error('UserContext - Error during auth check:', error);
+        logger.info('UserContext - Auth check failed', {
+          duration: duration.toFixed(2),
+          startTime,
+          errorTime,
+          error: error instanceof Error ? error.message : String(error),
+        });
 
         // On error, assume user is not authenticated but don't clear existing user data
         // This prevents the app from getting stuck in loading state
@@ -80,14 +105,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           'UserContext - Auth check failed, setting as unauthenticated'
         );
       } finally {
+        const finalTime = performance.now();
+        const totalDuration = finalTime - startTime;
+
         // Always set loading to false, regardless of success/failure
         setIsLoading(false);
-        logger.debug(
-          'UserContext - Auth check completed, loading set to false'
-        );
+        logger.info('UserContext - Auth check completed', {
+          totalDuration: totalDuration.toFixed(2),
+          startTime,
+          finalTime,
+        });
       }
     };
-
     checkAuth();
   }, []);
 
