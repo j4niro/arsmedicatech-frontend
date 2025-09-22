@@ -1,4 +1,5 @@
 import { API_URL } from '../env_vars';
+//const API_URL = '';
 import logger from '../services/logging';
 
 class AuthService {
@@ -30,6 +31,22 @@ class AuthService {
     return headers;
   }
 
+  handleRedirectAuth(): boolean {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('token');
+
+    if (tokenFromUrl) {
+      logger.info('AuthService - Token found in URL from redirect.');
+      this.token = tokenFromUrl;
+      localStorage.setItem('auth_token', this.token);
+
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return true; // Indicates that auth state changed
+    }
+    return false; // No token was found in the URL
+  }
+
   async login(username: string, password: string) {
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -55,6 +72,13 @@ class AuthService {
     } catch (error) {
       return { success: false, error: 'Network error occurred' };
     }
+  }
+
+  saveAuthData(token: string, user: any) {
+    this.token = token;
+    this.user = user;
+    localStorage.setItem('auth_token', this.token ?? '');
+    localStorage.setItem('user', JSON.stringify(this.user));
   }
 
   async register(
@@ -113,7 +137,13 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<any> {
-    // TODO: What was this even for? if (!this.token) {return null;}
+    // Prevents a useless API call if we already know there's no token.
+    if (!this.token) {
+      logger.info(
+        'AuthService - No token available, skipping /api/auth/me call.'
+      );
+      return null;
+    }
 
     const startTime = performance.now();
     logger.info('AuthService - getCurrentUser started', { startTime });
@@ -128,6 +158,8 @@ class AuthService {
         headers: this.buildAuthHeaders(),
         credentials: 'include',
       });
+
+      console.log('response', response);
 
       const responseTime = performance.now();
       const responseDuration = responseTime - startTime;
@@ -332,7 +364,8 @@ class AuthService {
     intent: 'signin' | 'signup' = 'signin'
   ): string {
     // Returns the backend URL to initiate Cognito OAuth with the selected role and intent
-    return `${API_URL}/auth/login/cognito?role=${encodeURIComponent(role)}&intent=${intent}`;
+    const API_URL = 'http://localhost:3123';
+    return `${API_URL}/api/auth/login/cognito?role=${encodeURIComponent(role)}&intent=${intent}`;
   }
 
   async handleCognitoCallback(): Promise<{

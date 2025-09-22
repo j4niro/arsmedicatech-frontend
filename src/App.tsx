@@ -14,6 +14,8 @@ import { PatientDetail } from './pages/PatientDetail';
 import { Patients } from './pages/Patients';
 import UserNotesPage from './pages/UserNotesPage';
 
+import { useUser } from './components/UserContext';
+
 import {
   HealthMetricTracker,
   HealthMetricVisualization,
@@ -47,6 +49,8 @@ import { pluginAPI } from './services/api';
 import logger from './services/logging';
 import { PluginRoute } from './types';
 
+import authService from './services/auth';
+
 function useLoadPlugins() {
   useEffect(() => {
     pluginAPI.getAll().then(plugins => {
@@ -67,6 +71,8 @@ const isTestMode = true;
 
 function Home() {
   logger.debug('Home component rendered');
+
+  const { user, setUser, isLoading, setIsLoading } = useUser();
 
   // TODO: Make this more programmatically flexible...
   // [AMT-035] User Onboarding Flows
@@ -114,27 +120,12 @@ function Home() {
         const role = urlParams.get('role');
 
         if (token && userId && username && role) {
-          // Store authentication data
-          localStorage.setItem('auth_token', token);
-          localStorage.setItem(
-            'user',
-            JSON.stringify({
-              id: userId,
-              username: username,
-              role: role,
-              email: '', // Will be filled by getCurrentUser call
-              first_name: '',
-              last_name: '',
-            })
-          );
+          const userFromUrl = { id: userId, username, role };
+          authService.saveAuthData(token, userFromUrl);
 
           // Clean up the URL
           const newUrl = window.location.pathname;
           window.history.replaceState({}, document.title, newUrl);
-
-          // Refresh the page to update authentication state
-          window.location.reload();
-          return;
         }
       }
 
@@ -201,6 +192,12 @@ function Home() {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
       }
+
+      const currentUser = await authService.getCurrentUser();
+
+      // Updates app's state and makes the UI re-render.
+      setUser(currentUser);
+      setIsLoading(false);
     };
 
     handleAuthCallback();

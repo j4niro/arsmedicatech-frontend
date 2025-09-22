@@ -156,6 +156,8 @@ const PerformanceDashboard: React.FC<{
               <div>Status: {userLoading ? '🔄 Loading' : '✅ Ready'}</div>
               <div>Auth: {isAuthenticated ? '✅ Yes' : '❌ No'}</div>
               <div>User: {user ? '✅ Loaded' : '❌ None'}</div>
+              <div>Network: {navigator.onLine ? '🟢 Online' : '🔴 Offline'}</div>
+              <div>API URL: {process.env.API_URL || 'Not set'}</div>
             </div>
           </div>
         </>
@@ -332,6 +334,65 @@ const PublicDashboard: React.FC<{ showSignupPopup: () => void }> = ({
   );
 };
 
+// Emergency Infrastructure Status Component
+const EmergencyInfrastructureStatus: React.FC<{
+  performanceMetrics: any;
+  userLoading: boolean;
+}> = ({ performanceMetrics, userLoading }) => {
+  // Only show when there are critical infrastructure issues
+  if (performanceMetrics.totalLoadTime < 60000 && !userLoading) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 bg-red-800 text-white p-4 text-center z-50 border-b-4 border-red-600">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-center space-x-4 mb-3">
+          <span className="text-2xl">🚨</span>
+          <h1 className="text-xl font-bold">CRITICAL INFRASTRUCTURE ISSUE DETECTED</h1>
+          <span className="text-2xl">🚨</span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+          <div className="bg-red-700 p-3 rounded">
+            <div className="font-bold mb-2">🚀 Performance</div>
+            <div>Load Time: {(performanceMetrics.totalLoadTime / 1000).toFixed(1)}s</div>
+            <div>Status: {userLoading ? '🔄 Loading' : '❌ Failed'}</div>
+          </div>
+          
+          <div className="bg-red-700 p-3 rounded">
+            <div className="font-bold mb-2">🌐 Network</div>
+            <div>Status: {navigator.onLine ? '🟢 Online' : '🔴 Offline'}</div>
+            <div>API: {process.env.API_URL || 'Not set'}</div>
+          </div>
+          
+          <div className="bg-red-700 p-3 rounded">
+            <div className="font-bold mb-2">⚙️ Environment</div>
+            <div>Mode: {process.env.NODE_ENV || 'Unknown'}</div>
+            <div>Demo: {process.env.DEMO_MODE || 'Unknown'}</div>
+          </div>
+        </div>
+        
+        <div className="bg-red-900 p-4 rounded text-left">
+          <div className="font-bold mb-2">🔍 IMMEDIATE DEBUGGING STEPS:</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div>1. Check server status and logs</div>
+            <div>2. Verify database connectivity</div>
+            <div>3. Check network/firewall rules</div>
+            <div>4. Monitor server resources (CPU, memory, disk)</div>
+            <div>5. Verify DNS resolution</div>
+            <div>6. Check CORS configuration</div>
+            <div>7. Test API endpoints directly</div>
+            <div>8. Review load balancer configuration</div>
+          </div>
+        </div>
+        
+        <div className="mt-3 text-xs text-red-200">
+          <strong>Note:</strong> This is not a normal performance issue - 60+ second delays indicate fundamental infrastructure problems that require immediate server-side investigation.
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Dashboard Component
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated, setUser, isLoading: userLoading } = useUser();
@@ -393,7 +454,7 @@ const Dashboard: React.FC = () => {
         userLoading,
         loadingTimeout,
       });
-
+      
       setPerformanceMetrics(prev => ({
         ...prev,
         authCheckComplete: authCompleteTime,
@@ -405,6 +466,30 @@ const Dashboard: React.FC = () => {
       }));
     }
   }, [userLoading, loadingTimeout, performanceMetrics.componentMount]);
+
+  // Fallback: Force completion if stuck for too long
+  useEffect(() => {
+    const fallbackTimeout = setTimeout(() => {
+      if (performanceMetrics.totalLoadTime === 0 && !userLoading) {
+        const currentTime = performance.now();
+        const fallbackDuration = currentTime - performanceMetrics.componentMount;
+        
+        logger.warn('Dashboard - Performance monitoring fallback triggered after 30 seconds');
+        
+        setPerformanceMetrics(prev => ({
+          ...prev,
+          authCheckComplete: currentTime,
+          totalLoadTime: fallbackDuration,
+          bottlenecks: [
+            ...prev.bottlenecks,
+            `Fallback triggered: ${fallbackDuration.toFixed(2)}ms`,
+          ],
+        }));
+      }
+    }, 30000); // 30 second fallback
+
+    return () => clearTimeout(fallbackTimeout);
+  }, [performanceMetrics.totalLoadTime, userLoading, performanceMetrics.componentMount]);
 
   // Performance bottleneck detection
   useEffect(() => {
@@ -580,14 +665,18 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const checkUsersExist = async () => {
       try {
+        logger.debug('Dashboard - Checking if users exist...');
         const response = await apiService.checkUsersExist();
         setUsersExist(response.users_exist);
+        logger.debug('Dashboard - Users exist check completed:', response.users_exist);
       } catch (error) {
-        // If error (e.g. 403), assume users exist to avoid exposing admin setup
+        // If error (e.g. timeout, 403), assume users exist to avoid exposing admin setup
+        logger.warn('Dashboard - Users exist check failed, assuming users exist:', error);
         setUsersExist(true);
       }
     };
 
+    // Don't block performance monitoring for this check
     checkUsersExist();
   }, []);
 
@@ -651,11 +740,84 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Direct API testing for infrastructure diagnosis
+  const testAPIDirectly = async () => {
+    console.group('🔍 DIRECT API INFRASTRUCTURE TEST');
+    
+    try {
+      const apiUrl = process.env.API_URL || 'https://demo.arsmedicatech.com';
+      console.log('Testing API endpoint:', apiUrl);
+      
+      // Test 1: Basic connectivity
+      console.log('Test 1: Basic connectivity...');
+      const startTime = performance.now();
+      
+      const response = await fetch(`${apiUrl}/api/auth/me`, {
+        method: 'HEAD',
+        mode: 'cors',
+      });
+      
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      console.log('✅ Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        duration: `${duration.toFixed(2)}ms`,
+        headers: [...response.headers.entries()]
+      });
+      
+      // Test 2: DNS resolution
+      console.log('Test 2: DNS resolution...');
+      const url = new URL(apiUrl);
+      console.log('Hostname:', url.hostname);
+      console.log('Protocol:', url.protocol);
+      console.log('Port:', url.port);
+      
+      // Test 3: Network timing
+      console.log('Test 3: Network timing...');
+      if (duration > 10000) {
+        console.error('🚨 CRITICAL: Response time > 10 seconds indicates infrastructure failure');
+      } else if (duration > 5000) {
+        console.warn('⚠️ WARNING: Response time > 5 seconds indicates performance issues');
+      } else {
+        console.log('✅ Response time is acceptable');
+      }
+      
+    } catch (error) {
+      console.error('❌ API test failed:', error);
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('🚨 This is a network-level failure - possible causes:');
+        console.error('1. Server is down');
+        console.error('2. DNS resolution failed');
+        console.error('3. Network blocked by firewall');
+        console.error('4. CORS configuration error');
+        console.error('5. SSL/TLS handshake failure');
+      }
+    }
+    
+    console.groupEnd();
+  };
+
+  // Add API test button to emergency status
+  useEffect(() => {
+    if (performanceMetrics.totalLoadTime > 60000) {
+      // Add global API test function when critical issues detected
+      (window as any).testAPIDirectly = testAPIDirectly;
+      console.log('🔧 Emergency API test function available: window.testAPIDirectly()');
+    }
+  }, [performanceMetrics.totalLoadTime]);
+
   // Render loading state
   if (userLoading && !loadingTimeout) {
     return (
       <>
-        <PerformanceWarningBanner
+        <EmergencyInfrastructureStatus 
+          performanceMetrics={performanceMetrics}
+          userLoading={userLoading}
+        />
+        <PerformanceWarningBanner 
           performanceMetrics={performanceMetrics}
           setShowPerformanceDashboard={setShowPerformanceDashboard}
         />
@@ -676,7 +838,11 @@ const Dashboard: React.FC = () => {
   if (loadingTimeout) {
     return (
       <>
-        <PerformanceWarningBanner
+        <EmergencyInfrastructureStatus 
+          performanceMetrics={performanceMetrics}
+          userLoading={userLoading}
+        />
+        <PerformanceWarningBanner 
           performanceMetrics={performanceMetrics}
           setShowPerformanceDashboard={setShowPerformanceDashboard}
         />
@@ -698,7 +864,11 @@ const Dashboard: React.FC = () => {
     logger.debug('Dashboard - showing authenticated dashboard');
     return (
       <>
-        <PerformanceWarningBanner
+        <EmergencyInfrastructureStatus 
+          performanceMetrics={performanceMetrics}
+          userLoading={userLoading}
+        />
+        <PerformanceWarningBanner 
           performanceMetrics={performanceMetrics}
           setShowPerformanceDashboard={setShowPerformanceDashboard}
         />
@@ -720,7 +890,11 @@ const Dashboard: React.FC = () => {
   logger.debug('Dashboard - showing public dashboard');
   return (
     <>
-      <PerformanceWarningBanner
+      <EmergencyInfrastructureStatus 
+        performanceMetrics={performanceMetrics}
+        userLoading={userLoading}
+      />
+      <PerformanceWarningBanner 
         performanceMetrics={performanceMetrics}
         setShowPerformanceDashboard={setShowPerformanceDashboard}
       />

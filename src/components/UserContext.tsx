@@ -25,6 +25,7 @@ interface UserContextType {
   setUser: (user: User | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  useUser: () => UserContextType;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -47,17 +48,65 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setAuthCheckStartTime(startTime);
       logger.info('UserContext - Starting auth check', { startTime });
 
+      // EMERGENCY: If we're in demo mode, skip auth check entirely
+      if (
+        process.env.DEMO_MODE === 'true' ||
+        process.env.REACT_APP_DEMO_MODE === 'true' ||
+        process.env.API_URL?.includes('demo.arsmedicatech.com')
+      ) {
+        logger.warn(
+          'UserContext - DEMO MODE DETECTED - Skipping auth check to prevent 60+ second delays'
+        );
+        setIsLoading(false);
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
       // Add timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
         const timeoutTime = performance.now();
         const duration = timeoutTime - startTime;
-        logger.warn(
-          'UserContext - Auth check timed out after 60 seconds, setting loading to false',
-          { duration: duration.toFixed(2), startTime, timeoutTime }
+        logger.error(
+          'UserContext - CRITICAL: Auth check timed out after 60 seconds - This indicates infrastructure failure',
+          {
+            duration: duration.toFixed(2),
+            startTime,
+            timeoutTime,
+            apiUrl: process.env.API_URL,
+            isDemoMode: process.env.DEMO_MODE,
+            recommendation:
+              'Check server status, database connectivity, and network configuration',
+          }
         );
+
+        // EMERGENCY: Force completion and show error state
         setIsLoading(false);
-        // Don't clear user data on timeout, just stop loading
-      }, 60000); // 60 second timeout to catch the full delay
+        setIsAuthenticated(false);
+        setUser(null);
+
+        // Log critical error to console for immediate debugging
+        console.error('🚨 CRITICAL INFRASTRUCTURE ISSUE DETECTED 🚨');
+        console.error('Auth check taking 60+ seconds indicates:');
+        console.error('1. Server is down or unresponsive');
+        console.error('2. Database connection issues');
+        console.error('3. Network/firewall blocking requests');
+        console.error('4. Server overloaded or crashed');
+        console.error('5. DNS resolution problems');
+        console.error('6. CORS configuration issues');
+        console.error('7. Load balancer problems');
+        console.error('8. SSL/TLS handshake failures');
+        console.error('');
+        console.error('IMMEDIATE ACTIONS REQUIRED:');
+        console.error('1. Check server status and logs');
+        console.error('2. Verify database connectivity');
+        console.error('3. Check network/firewall rules');
+        console.error('4. Monitor server resources (CPU, memory, disk)');
+        console.error('5. Verify DNS resolution');
+        console.error('6. Check CORS configuration');
+        console.error('7. Test API endpoints directly');
+        console.error('8. Review load balancer configuration');
+      }, 60000); // 60 second timeout
 
       try {
         logger.debug('UserContext - Starting auth check...');
@@ -120,6 +169,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      setUser(null);
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const setUserWithLogging = (newUser: User | null) => {
     logger.debug('UserContext - setUser called with:', newUser);
     setUser(newUser);
@@ -129,7 +188,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider
-      value={{ user, setUser: setUserWithLogging, isAuthenticated, isLoading }}
+      value={{
+        user,
+        useUser,
+        setUser: setUserWithLogging,
+        isAuthenticated,
+        isLoading,
+        setIsLoading,
+      }}
     >
       {children}
     </UserContext.Provider>

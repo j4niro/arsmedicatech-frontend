@@ -9,6 +9,8 @@ class ApiService {
   constructor() {
     this.baseURL = API_URL ?? '';
     this.apiURL = API_URL + '/api';
+    //this.baseURL = '';
+    //this.apiURL = '';
   }
 
   // Helper method to get headers with authentication
@@ -54,11 +56,28 @@ class ApiService {
     logger.debug('API request - Headers:', config.headers);
     logger.debug('API request - Auth required:', requireAuth);
 
+    // Add timeout for requests - longer for production environments
+    const isProduction =
+      process.env.NODE_ENV === 'production' ||
+      process.env.API_URL?.includes('demo.arsmedicatech.com');
+
+    // Production gets longer timeouts due to network latency
+    const timeout = endpoint.includes('/llm_chat')
+      ? 60000 // 60s for LLM
+      : isProduction
+        ? 45000 // 45s for production API calls
+        : 15000; // 15s for local development
+
+    logger.debug(
+      `API request - Using timeout: ${timeout}ms (${isProduction ? 'production' : 'development'})`
+    );
+
     try {
-      // Add timeout for requests (30 seconds for LLM requests, 10 seconds for others)
-      const timeout = endpoint.includes('/llm_chat') ? 30000 : 10000;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = setTimeout(() => {
+        logger.warn(`API request - Request timed out after ${timeout}ms:`, url);
+        controller.abort();
+      }, timeout);
 
       const response = await fetch(url, {
         ...config,
@@ -83,10 +102,13 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
+        const timeoutMsg = `Request timed out after ${timeout}ms. This may indicate network latency or server performance issues.`;
+        logger.error('API request - Timeout error:', timeoutMsg);
+        throw new Error(timeoutMsg);
       }
+
+      logger.error('API request failed:', error);
       throw error;
     }
   }
