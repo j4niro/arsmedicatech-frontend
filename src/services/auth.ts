@@ -1,6 +1,7 @@
 import { API_URL } from '../env_vars';
 //const API_URL = '';
 import logger from '../services/logging';
+import loginRadiusAuthService from './loginRadiusAuth';
 
 class AuthService {
   token: string | null;
@@ -45,6 +46,74 @@ class AuthService {
       return true; // Indicates that auth state changed
     }
     return false; // No token was found in the URL
+  }
+
+  /**
+   * Handle LoginRadius OIDC callback
+   */
+  async handleLoginRadiusCallback(): Promise<{
+    success: boolean;
+    user?: any;
+    error?: string;
+  }> {
+    try {
+      const result = await loginRadiusAuthService.handleCallback();
+      
+      if (result.success && result.user) {
+        // The LoginRadius service now handles backend communication
+        // and returns the backend's JWT token and user data
+        this.token = loginRadiusAuthService.getToken();
+        this.user = result.user;
+        
+        // Update localStorage with backend data
+        localStorage.setItem('auth_token', this.token || '');
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        logger.info('LoginRadius authentication successful', { 
+          userId: result.user.id,
+          role: result.user.role 
+        });
+        
+        return {
+          success: true,
+          user: result.user,
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      logger.error('LoginRadius callback handling failed:', error);
+      return {
+        success: false,
+        error: 'Failed to process LoginRadius authentication',
+      };
+    }
+  }
+
+  /**
+   * Initiate LoginRadius OIDC flow
+   */
+  initiateLoginRadiusAuth(role: string = 'patient'): string | null {
+    return loginRadiusAuthService.initiateAuth(role);
+  }
+
+  /**
+   * Check if user is authenticated via LoginRadius
+   */
+  isLoginRadiusAuthenticated(): boolean {
+    return loginRadiusAuthService.isAuthenticated();
+  }
+
+  /**
+   * Get LoginRadius user
+   */
+  getLoginRadiusUser(): any {
+    const lrUser = loginRadiusAuthService.getUser();
+    if (lrUser) {
+      const role = sessionStorage.getItem('lr_role') || 'patient';
+      return loginRadiusAuthService.convertToAppUser(lrUser, role);
+    }
+    return null;
   }
 
   async login(username: string, password: string) {
@@ -119,12 +188,18 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
+      // Logout from traditional auth
       if (this.token) {
         await fetch(`${API_URL}/api/auth/logout`, {
           method: 'POST',
           headers: this.buildAuthHeaders(),
           credentials: 'include',
         });
+      }
+
+      // Logout from LoginRadius if authenticated
+      if (this.isLoginRadiusAuthenticated()) {
+        await loginRadiusAuthService.logout();
       }
     } catch (error) {
       console.error('Logout error:', error);
@@ -143,6 +218,13 @@ class AuthService {
         'AuthService - No token available, skipping /api/auth/me call.'
       );
       return null;
+    }
+
+    // If we already have user data and it's a LoginRadius user, return it directly
+    // This prevents unnecessary API calls for LoginRadius users
+    if (this.user && this.user.source === 'loginradius') {
+      logger.info('AuthService - LoginRadius user found locally, skipping API call');
+      return this.user;
     }
 
     const startTime = performance.now();
