@@ -25,6 +25,8 @@ interface UserContextType {
   setUser: (user: User | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  refreshAuth: () => Promise<void>;
   useUser: () => UserContextType;
 }
 
@@ -61,6 +63,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
         setUser(null);
         return;
+      }
+
+      // Check for traditional authentication first (includes LoginRadius users after they're processed)
+      const isAuth = authService.isAuthenticated();
+      logger.debug('UserContext - Auth service check:', {
+        isAuthenticated: isAuth,
+      });
+
+      if (isAuth) {
+        const currentUser = authService.getUser();
+        logger.debug('UserContext - User data check:', {
+          hasUser: !!currentUser,
+          userId: currentUser?.id || 'null',
+          userSource: currentUser?.source || 'unknown',
+        });
+
+        if (currentUser) {
+          logger.info('UserContext - Authenticated user found', {
+            userId: currentUser.id,
+          });
+          setUser(currentUser);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Add timeout to prevent infinite loading
@@ -186,6 +213,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     logger.debug('UserContext - isAuthenticated set to:', !!newUser);
   };
 
+  const setIsLoadingWithLogging = (loading: boolean) => {
+    logger.debug('UserContext - setIsLoading called with:', loading);
+    setIsLoading(loading);
+  };
+
+  // Method to refresh authentication state (useful after LoginRadius auth)
+  const refreshAuth = async () => {
+    logger.info('UserContext - Refreshing authentication state');
+    setIsLoading(true);
+
+    // Check for traditional authentication first (includes LoginRadius users after they're processed)
+    if (authService.isAuthenticated()) {
+      const currentUser = authService.getUser();
+      if (currentUser) {
+        logger.info('UserContext - Refreshed user found', {
+          userId: currentUser.id,
+        });
+        setUser(currentUser);
+        setIsAuthenticated(true);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // If no user found, clear state
+    setUser(null);
+    setIsAuthenticated(false);
+    setIsLoading(false);
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -194,7 +251,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser: setUserWithLogging,
         isAuthenticated,
         isLoading,
-        setIsLoading,
+        setIsLoading: setIsLoadingWithLogging,
+        refreshAuth,
       }}
     >
       {children}
