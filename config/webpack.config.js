@@ -94,6 +94,37 @@ module.exports = (env = {}) => {
         process.env.PERFORMANCE_MONITORING ||
         'true'
     ),
+    // LoginRadius environment variables
+    'process.env.REACT_APP_LR_CLIENT_ID': JSON.stringify(
+      process.env.REACT_APP_LR_CLIENT_ID ||
+        process.env.LOGINRADIUS_CLIENT_ID ||
+        ''
+    ),
+    'process.env.REACT_APP_LR_CLIENT_SECRET': JSON.stringify(
+      process.env.REACT_APP_LR_CLIENT_SECRET ||
+        process.env.LOGINRADIUS_CLIENT_SECRET ||
+        ''
+    ),
+    'process.env.REACT_APP_LR_APP_NAME': JSON.stringify(
+      process.env.REACT_APP_LR_APP_NAME ||
+        process.env.LOGINRADIUS_APP_NAME ||
+        ''
+    ),
+    'process.env.REACT_APP_LR_ISSUER_URL': JSON.stringify(
+      process.env.REACT_APP_LR_ISSUER_URL ||
+        process.env.LOGINRADIUS_ISSUER_URL ||
+        ''
+    ),
+    'process.env.REACT_APP_LR_NATIVE_REDIRECT_URI': JSON.stringify(
+      process.env.REACT_APP_LR_NATIVE_REDIRECT_URI ||
+        process.env.LOGINRADIUS_NATIVE_REDIRECT_URI ||
+        ''
+    ),
+    'process.env.REACT_APP_LR_WEB_REDIRECT_URI': JSON.stringify(
+      process.env.REACT_APP_LR_WEB_REDIRECT_URI ||
+        process.env.LOGINRADIUS_WEB_REDIRECT_URI ||
+        ''
+    ),
     // Define the process object itself for browser environment
     process: JSON.stringify({
       env: {
@@ -114,6 +145,31 @@ module.exports = (env = {}) => {
           process.env.REACT_APP_PERFORMANCE_MONITORING ||
           process.env.PERFORMANCE_MONITORING ||
           'true',
+        // LoginRadius environment variables
+        REACT_APP_LR_CLIENT_ID:
+          process.env.REACT_APP_LR_CLIENT_ID ||
+          process.env.LOGINRADIUS_CLIENT_ID ||
+          '',
+        REACT_APP_LR_CLIENT_SECRET:
+          process.env.REACT_APP_LR_CLIENT_SECRET ||
+          process.env.LOGINRADIUS_CLIENT_SECRET ||
+          '',
+        REACT_APP_LR_APP_NAME:
+          process.env.REACT_APP_LR_APP_NAME ||
+          process.env.LOGINRADIUS_APP_NAME ||
+          '',
+        REACT_APP_LR_ISSUER_URL:
+          process.env.REACT_APP_LR_ISSUER_URL ||
+          process.env.LOGINRADIUS_ISSUER_URL ||
+          '',
+        REACT_APP_LR_NATIVE_REDIRECT_URI:
+          process.env.REACT_APP_LR_NATIVE_REDIRECT_URI ||
+          process.env.LOGINRADIUS_NATIVE_REDIRECT_URI ||
+          '',
+        REACT_APP_LR_WEB_REDIRECT_URI:
+          process.env.REACT_APP_LR_WEB_REDIRECT_URI ||
+          process.env.LOGINRADIUS_WEB_REDIRECT_URI ||
+          '',
       },
     }),
   };
