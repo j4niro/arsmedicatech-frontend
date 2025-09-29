@@ -3,6 +3,7 @@ import Joyride from 'react-joyride';
 import { Outlet } from 'react-router-dom';
 import './App.css';
 import ErrorModal, { createErrorModalState } from './components/ErrorModal';
+import LoginRadiusCallback from './components/LoginRadiusCallback';
 import PatientForm from './components/PatientForm';
 import { tourSteps } from './onboarding/tourSteps';
 import Dashboard from './pages/Dashboard';
@@ -72,7 +73,7 @@ const isTestMode = true;
 function Home() {
   logger.debug('Home component rendered');
 
-  const { user, setUser, isLoading, setIsLoading } = useUser();
+  const { user, setUser, isLoading, setIsLoading, refreshAuth } = useUser();
 
   // TODO: Make this more programmatically flexible...
   // [AMT-035] User Onboarding Flows
@@ -325,6 +326,10 @@ const baseRoutes: PluginRoute[] = [
   { path: 'admin', element: <Administration /> },
 
   { path: 'education/:id', element: <Education /> },
+
+  // LoginRadius OIDC callback routes
+  { path: 'auth/loginradius/callback', element: <LoginRadiusCallback /> },
+  { path: 'callback', element: <LoginRadiusCallback /> },
 ];
 
 function App() {
