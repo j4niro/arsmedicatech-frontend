@@ -3,6 +3,7 @@ import authService from '../services/auth';
 import logger from '../services/logging';
 import GoogleAuthButton from './GoogleAuthButton';
 import './LoginForm.css';
+import LoginRadiusAuthButton from './LoginRadiusAuthButton';
 
 const LoginForm = ({
   onLogin,
@@ -155,6 +156,9 @@ const LoginForm = ({
           <GoogleAuthButton onClick={handleGoogleSignin}>
             Sign in with Google
           </GoogleAuthButton>
+          <LoginRadiusAuthButton role={formData.role} intent="signin">
+            Sign in with LoginRadius
+          </LoginRadiusAuthButton>
           <button
             type="submit"
             className="login-button"
