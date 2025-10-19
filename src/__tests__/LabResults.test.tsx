@@ -54,6 +54,8 @@ const mockLabResults = {
 describe('LabResults Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear localStorage to ensure no cached data interferes with tests
+    localStorage.clear();
   });
 
   it('renders loading state initially', () => {
@@ -95,7 +97,8 @@ describe('LabResults Component', () => {
   });
 
   it('shows error message when API call fails', async () => {
-    mockApiService.getLabResults.mockRejectedValue(new Error('API Error'));
+    // Mock a non-Error type to trigger the default error message
+    mockApiService.getLabResults.mockRejectedValue('Network failure');
 
     render(<LabResults />);
 

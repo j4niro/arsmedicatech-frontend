@@ -27,7 +27,6 @@ interface UserContextType {
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   refreshAuth: () => Promise<void>;
-  useUser: () => UserContextType;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -247,7 +246,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     <UserContext.Provider
       value={{
         user,
-        useUser,
         setUser: setUserWithLogging,
         isAuthenticated,
         isLoading,
