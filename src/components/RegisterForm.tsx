@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import authService from '../services/auth';
 import './LoginForm.css';
+import LoginRadiusAuthButton from './LoginRadiusAuthButton';
 import RoleSelect from './RoleSelect';
 import { useUser } from './UserContext';
 
@@ -291,6 +292,10 @@ const RegisterForm = ({
             onChange={e => handleChange(e)}
             disabled={isLoading}
           />
+
+          <LoginRadiusAuthButton role={formData.role} intent="signup">
+            Sign up with LoginRadius
+          </LoginRadiusAuthButton>
 
           <button type="submit" className="login-button" disabled={isLoading}>
             {isLoading ? 'Creating Account...' : 'Create Account'}

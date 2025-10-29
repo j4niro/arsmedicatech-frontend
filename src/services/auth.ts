@@ -1,8 +1,11 @@
 import { API_URL } from '../env_vars';
+//const API_URL = '';
+import logger from '../services/logging';
+import loginRadiusAuthService from './loginRadiusAuth';
 
 class AuthService {
   token: string | null;
-  user: { role: 'user' | 'nurse' | 'doctor' | 'admin' } | null;
+  user: { role: 'user' | 'nurse' | 'doctor' | 'admin'; source?: string } | null;
 
   constructor() {
     this.token = localStorage.getItem('auth_token');
@@ -27,6 +30,90 @@ class AuthService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
     return headers;
+  }
+
+  handleRedirectAuth(): boolean {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('token');
+
+    if (tokenFromUrl) {
+      logger.info('AuthService - Token found in URL from redirect.');
+      this.token = tokenFromUrl;
+      localStorage.setItem('auth_token', this.token);
+
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return true; // Indicates that auth state changed
+    }
+    return false; // No token was found in the URL
+  }
+
+  /**
+   * Handle LoginRadius OIDC callback
+   */
+  async handleLoginRadiusCallback(): Promise<{
+    success: boolean;
+    user?: any;
+    error?: string;
+  }> {
+    try {
+      const result = await loginRadiusAuthService.handleCallback();
+
+      if (result.success && result.user) {
+        // The LoginRadius service now handles backend communication
+        // and returns the backend's JWT token and user data
+        this.token = loginRadiusAuthService.getToken();
+        this.user = this.getLoginRadiusUser() || result.user;
+
+        // Update localStorage with backend data
+        localStorage.setItem('auth_token', this.token || '');
+        localStorage.setItem('user', JSON.stringify(this.user));
+
+        logger.info('LoginRadius authentication successful', {
+          userId: result.user.id,
+          role: result.user.role,
+        });
+
+        return {
+          success: true,
+          user: result.user,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('LoginRadius callback handling failed:', error);
+      return {
+        success: false,
+        error: 'Failed to process LoginRadius authentication',
+      };
+    }
+  }
+
+  /**
+   * Initiate LoginRadius OIDC flow
+   */
+  initiateLoginRadiusAuth(role: string = 'patient'): string | null {
+    return loginRadiusAuthService.initiateAuth(role);
+  }
+
+  /**
+   * Check if user is authenticated via LoginRadius
+   */
+  isLoginRadiusAuthenticated(): boolean {
+    return loginRadiusAuthService.isAuthenticated();
+  }
+
+  /**
+   * Get LoginRadius user
+   */
+  getLoginRadiusUser(): any {
+    const lrUser = loginRadiusAuthService.getUser();
+    if (lrUser) {
+      const role = sessionStorage.getItem('lr_role') || 'patient';
+      return { ...lrUser, role };
+    }
+    return null;
   }
 
   async login(username: string, password: string) {
@@ -54,6 +141,13 @@ class AuthService {
     } catch (error) {
       return { success: false, error: 'Network error occurred' };
     }
+  }
+
+  saveAuthData(token: string, user: any) {
+    this.token = token;
+    this.user = user;
+    localStorage.setItem('auth_token', this.token ?? '');
+    localStorage.setItem('user', JSON.stringify(this.user));
   }
 
   async register(
@@ -94,12 +188,18 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
+      // Logout from traditional auth
       if (this.token) {
         await fetch(`${API_URL}/api/auth/logout`, {
           method: 'POST',
           headers: this.buildAuthHeaders(),
           credentials: 'include',
         });
+      }
+
+      // Logout from LoginRadius if authenticated
+      if (this.isLoginRadiusAuthenticated()) {
+        await loginRadiusAuthService.logout();
       }
     } catch (error) {
       console.error('Logout error:', error);
@@ -112,26 +212,116 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<any> {
-    // TODO: What was this even for? if (!this.token) {return null;}
+    // Prevents a useless API call if we already know there's no token.
+    if (!this.token) {
+      logger.info(
+        'AuthService - No token available, skipping /api/auth/me call.'
+      );
+      return null;
+    }
+
+    // If we already have user data and it's a LoginRadius user, return it directly
+    // This prevents unnecessary API calls for LoginRadius users
+    if (this.user && this.user.source === 'loginradius') {
+      logger.info(
+        'AuthService - LoginRadius user found locally, skipping API call'
+      );
+      return this.user;
+    }
+
+    const startTime = performance.now();
+    logger.info('AuthService - getCurrentUser started', { startTime });
 
     try {
+      logger.debug(
+        'AuthService - Attempting to get current user from:',
+        `${API_URL}/api/auth/me`
+      );
+
       const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: this.buildAuthHeaders(),
         credentials: 'include',
       });
 
+      console.log('response', response);
+
+      const responseTime = performance.now();
+      const responseDuration = responseTime - startTime;
+
+      logger.debug(
+        'AuthService - getCurrentUser response status:',
+        response.status
+      );
+      logger.info('AuthService - Response received', {
+        responseDuration: responseDuration.toFixed(2),
+        startTime,
+        responseTime,
+        status: response.status,
+      });
+
       if (response.ok) {
         const data = await response.json();
+        const parseTime = performance.now();
+        const parseDuration = parseTime - responseTime;
+        const totalDuration = parseTime - startTime;
+
+        logger.debug('AuthService - getCurrentUser success, user data:', data);
+        logger.info('AuthService - Request completed successfully', {
+          responseDuration: responseDuration.toFixed(2),
+          parseDuration: parseDuration.toFixed(2),
+          totalDuration: totalDuration.toFixed(2),
+          startTime,
+          responseTime,
+          parseTime,
+        });
+
         this.user = data.user;
         localStorage.setItem('user', JSON.stringify(this.user));
         return this.user;
       } else {
+        // Log the error response for debugging
+        const errorData = await response.text();
+        const errorTime = performance.now();
+        const totalDuration = errorTime - startTime;
+
+        logger.warn(
+          `AuthService - getCurrentUser failed with status: ${response.status}, Response: ${errorData}`
+        );
+        logger.info('AuthService - Request failed', {
+          totalDuration: totalDuration.toFixed(2),
+          startTime,
+          errorTime,
+          status: response.status,
+        });
+
         // Token might be invalid, clear it
-        this.logout();
+        if (response.status === 401 || response.status === 403) {
+          logger.debug(
+            'AuthService - Clearing invalid token due to auth error'
+          );
+          this.logout();
+        }
         return null;
       }
     } catch (error) {
-      console.error('Get current user error:', error);
+      const errorTime = performance.now();
+      const totalDuration = errorTime - startTime;
+
+      logger.error('AuthService - getCurrentUser network error:', error);
+      logger.info('AuthService - Network error occurred', {
+        totalDuration: totalDuration.toFixed(2),
+        startTime,
+        errorTime,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // Check if it's a network error (like CORS, connection refused, etc.)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        logger.error(
+          'AuthService - Network fetch error, likely CORS or connection issue'
+        );
+      }
+
       return null;
     }
   }
@@ -258,7 +448,8 @@ class AuthService {
     intent: 'signin' | 'signup' = 'signin'
   ): string {
     // Returns the backend URL to initiate Cognito OAuth with the selected role and intent
-    return `${API_URL}/auth/login/cognito?role=${encodeURIComponent(role)}&intent=${intent}`;
+    const API_URL = 'http://localhost:3123';
+    return `${API_URL}/api/auth/login/cognito?role=${encodeURIComponent(role)}&intent=${intent}`;
   }
 
   async handleCognitoCallback(): Promise<{

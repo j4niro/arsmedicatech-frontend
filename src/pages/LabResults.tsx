@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { DEMO_MODE } from '../env_vars';
 import apiService from '../services/api';
+import logger from '../services/logging';
 import { LabResult, LabResultsData } from '../types';
 
 interface LabResultsTableProps {
@@ -298,22 +300,144 @@ const LabResults: React.FC = () => {
   const [labResults, setLabResults] = useState<LabResultsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Cache key for lab results
+  const CACHE_KEY = 'lab_results_cache';
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // Helper function to get cached data
+  const getCachedData = (): LabResultsData | null => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          logger.debug('LabResults - Using cached data');
+          return data;
+        }
+      }
+    } catch (error) {
+      logger.warn('LabResults - Failed to parse cached data:', error);
+    }
+    return null;
+  };
+
+  // Helper function to cache data
+  const cacheData = (data: LabResultsData) => {
+    try {
+      const cacheData = {
+        data,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      logger.debug('LabResults - Data cached successfully');
+    } catch (error) {
+      logger.warn('LabResults - Failed to cache data:', error);
+    }
+  };
+
+  // Helper function to clear cache
+  const clearCache = () => {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      logger.debug('LabResults - Cache cleared');
+    } catch (error) {
+      logger.warn('LabResults - Failed to clear cache:', error);
+    }
+  };
+
+  const fetchLabResults = async (isRetry: boolean = false) => {
+    try {
+      if (isRetry) {
+        setIsRetrying(true);
+        setRetryCount(prev => prev + 1);
+      } else {
+        setLoading(true);
+        setRetryCount(0);
+      }
+
+      setError(null);
+
+      // Try to get cached data first if not retrying
+      if (!isRetry) {
+        const cachedData = getCachedData();
+        if (cachedData) {
+          setLabResults(cachedData);
+          setLoading(false);
+          logger.debug('LabResults - Loaded from cache');
+          return;
+        }
+      }
+
+      logger.debug('LabResults - Fetching lab results from API');
+      const data = await apiService.getLabResults();
+
+      setLabResults(data);
+      cacheData(data); // Cache the successful response
+      logger.debug('LabResults - Successfully fetched and cached data');
+    } catch (err) {
+      logger.error('LabResults - Failed to fetch lab results:', err);
+
+      let errorMessage = 'Failed to load lab results. Please try again later.';
+
+      if (err instanceof Error) {
+        if (err.message.includes('timed out')) {
+          errorMessage =
+            'Request timed out. The server may be experiencing high load. Please try again.';
+        } else if (err.message.includes('Authentication required')) {
+          if (DEMO_MODE) {
+            errorMessage =
+              'Authentication error in demo mode. This may indicate a server configuration issue.';
+          } else {
+            errorMessage = 'Your session has expired. Please log in again.';
+            // Redirect to login or refresh auth
+            window.location.href = '/';
+            return;
+          }
+        } else if (err.message.includes('Failed to fetch')) {
+          errorMessage =
+            'Network error. Please check your connection and try again.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
+
+      // If we have cached data, use it as fallback
+      const cachedData = getCachedData();
+      if (cachedData && !isRetry) {
+        logger.debug('LabResults - Using cached data as fallback due to error');
+        setLabResults(cachedData);
+        setError('Showing cached data. Some information may be outdated.');
+      }
+    } finally {
+      setLoading(false);
+      setIsRetrying(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (retryCount >= 3) {
+      // Clear cache and start fresh after 3 retries
+      clearCache();
+      setRetryCount(0);
+      setError(null);
+    }
+    fetchLabResults(true);
+  };
+
+  const handleRefresh = () => {
+    clearCache();
+    setRetryCount(0);
+    setError(null);
+    fetchLabResults();
+  };
 
   useEffect(() => {
-    const fetchLabResults = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await apiService.getLabResults();
-        setLabResults(data);
-      } catch (err) {
-        console.error('Failed to fetch lab results:', err);
-        setError('Failed to load lab results. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    logger.debug('LabResults - Component mounted, DEMO_MODE:', DEMO_MODE);
     fetchLabResults();
   }, []);
 
@@ -324,11 +448,28 @@ const LabResults: React.FC = () => {
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
             <p className="text-xl text-gray-600 font-medium">
-              Loading lab results...
+              {isRetrying ? 'Retrying...' : 'Loading lab results...'}
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              Please wait while we fetch your laboratory data
+              {isRetrying
+                ? `Attempt ${retryCount + 1}/3 - Please wait while we retry the request`
+                : 'Please wait while we fetch your laboratory data'}
             </p>
+
+            {isRetrying && (
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setIsRetrying(false);
+                    setLoading(false);
+                    setError('Request cancelled by user.');
+                  }}
+                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                >
+                  Cancel Retry
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -345,13 +486,41 @@ const LabResults: React.FC = () => {
               <h2 className="text-xl font-bold text-red-800 mb-2">
                 Error Loading Results
               </h2>
-              <p className="text-red-700 mb-6">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
-              >
-                Try Again
-              </button>
+              <p className="text-red-700 mb-4">{error}</p>
+
+              {retryCount > 0 && (
+                <p className="text-sm text-red-600 mb-4">
+                  Retry attempt: {retryCount}/3
+                </p>
+              )}
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleRetry}
+                  disabled={isRetrying}
+                  className={`w-full px-6 py-3 rounded-lg transition-colors duration-200 font-medium ${
+                    isRetrying
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'bg-red-600 text-white hover:bg-red-700'
+                  }`}
+                >
+                  {isRetrying ? 'Retrying...' : 'Try Again'}
+                </button>
+
+                <button
+                  onClick={handleRefresh}
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                >
+                  Refresh & Clear Cache
+                </button>
+              </div>
+
+              {retryCount >= 3 && (
+                <p className="text-xs text-red-500 mt-3">
+                  Multiple retries failed. Try refreshing the page or contact
+                  support.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -383,12 +552,40 @@ const LabResults: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Lab Results</h1>
-          <p className="text-lg text-gray-600 max-w-3xl">
-            Comprehensive laboratory test results with visual indicators and
-            detailed information. Click on any test to view detailed clinical
-            information.
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Lab Results
+              </h1>
+              <p className="text-lg text-gray-600 max-w-3xl">
+                Comprehensive laboratory test results with visual indicators and
+                detailed information. Click on any test to view detailed
+                clinical information.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-end space-y-2">
+              {DEMO_MODE && (
+                <div className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200 font-medium">
+                  🚀 Demo Mode
+                </div>
+              )}
+
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                title="Refresh data and clear cache"
+              >
+                🔄 Refresh
+              </button>
+
+              {error && error.includes('cached data') && (
+                <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded border border-yellow-200">
+                  ⚠️ Showing cached data
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-8">

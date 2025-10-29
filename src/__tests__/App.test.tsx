@@ -21,6 +21,14 @@ jest.mock('../components/UserContext', () => ({
   UserProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="user-provider">{children}</div>
   ),
+  useUser: () => ({
+    user: null,
+    setUser: jest.fn(),
+    isAuthenticated: false,
+    isLoading: false,
+    setIsLoading: jest.fn(),
+    refreshAuth: jest.fn(),
+  }),
 }));
 
 // Mock the NotificationContext
