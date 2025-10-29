@@ -176,7 +176,7 @@ class LoginRadiusAuthService {
       );
       return {
         success: true,
-        user: this.getUser(),
+        user: this.getUser() || undefined,
       };
     }
 
@@ -250,10 +250,10 @@ class LoginRadiusAuthService {
       }
 
       // Store the backend's JWT token and user data
-      this.token = backendResponse.token;
+      this.token = backendResponse.token || null;
       this.user = backendResponse.user;
 
-      localStorage.setItem('auth_token', this.token);
+      localStorage.setItem('auth_token', this.token || '');
       localStorage.setItem('user', JSON.stringify(this.user));
 
       // Store LoginRadius tokens separately for potential future use

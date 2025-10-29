@@ -5,7 +5,7 @@ import loginRadiusAuthService from './loginRadiusAuth';
 
 class AuthService {
   token: string | null;
-  user: { role: 'user' | 'nurse' | 'doctor' | 'admin' } | null;
+  user: { role: 'user' | 'nurse' | 'doctor' | 'admin'; source?: string } | null;
 
   constructor() {
     this.token = localStorage.getItem('auth_token');
@@ -58,28 +58,28 @@ class AuthService {
   }> {
     try {
       const result = await loginRadiusAuthService.handleCallback();
-      
+
       if (result.success && result.user) {
         // The LoginRadius service now handles backend communication
         // and returns the backend's JWT token and user data
         this.token = loginRadiusAuthService.getToken();
-        this.user = result.user;
-        
+        this.user = this.getLoginRadiusUser() || result.user;
+
         // Update localStorage with backend data
         localStorage.setItem('auth_token', this.token || '');
         localStorage.setItem('user', JSON.stringify(this.user));
-        
-        logger.info('LoginRadius authentication successful', { 
+
+        logger.info('LoginRadius authentication successful', {
           userId: result.user.id,
-          role: result.user.role 
+          role: result.user.role,
         });
-        
+
         return {
           success: true,
           user: result.user,
         };
       }
-      
+
       return result;
     } catch (error) {
       logger.error('LoginRadius callback handling failed:', error);
@@ -111,7 +111,7 @@ class AuthService {
     const lrUser = loginRadiusAuthService.getUser();
     if (lrUser) {
       const role = sessionStorage.getItem('lr_role') || 'patient';
-      return loginRadiusAuthService.convertToAppUser(lrUser, role);
+      return { ...lrUser, role };
     }
     return null;
   }
@@ -223,7 +223,9 @@ class AuthService {
     // If we already have user data and it's a LoginRadius user, return it directly
     // This prevents unnecessary API calls for LoginRadius users
     if (this.user && this.user.source === 'loginradius') {
-      logger.info('AuthService - LoginRadius user found locally, skipping API call');
+      logger.info(
+        'AuthService - LoginRadius user found locally, skipping API call'
+      );
       return this.user;
     }
 
