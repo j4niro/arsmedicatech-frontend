@@ -23,11 +23,10 @@ Interface utilisateur du projet **ArsMedicaTech**, développée en **React + Typ
 
 ```bash
 git clone https://github.com/j4niro/arsmedicatech-frontend.git
-cd arsmedicatech-frontend
+cd arsmedicatech-frontend````
 2️⃣ Installer les dépendances
-bash
-Copier le code
-npm install
+```bash
+npm install```
 3️⃣ Ajouter la gestion multilingue (si nécessaire)
 bash
 Copier le code
