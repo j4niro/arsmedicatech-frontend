@@ -23,9 +23,10 @@ Interface utilisateur du projet **ArsMedicaTech**, développée en **React + Typ
 
 ```bash
 git clone https://github.com/j4niro/arsmedicatech-frontend.git
+---
 ```bash
 cd arsmedicatech-frontend
-
+---
 
 ### **1️⃣ Cloner le projet**
 ```bash
