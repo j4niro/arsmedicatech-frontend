@@ -19,35 +19,50 @@ Interface utilisateur du projet **ArsMedicaTech**, développée en **React + Typ
 
 ## 🚀 Installation et lancement
 
-### 1️⃣ Cloner le projet
+### **1️⃣ Cloner le projet**
 
 ```bash
 git clone https://github.com/j4niro/arsmedicatech-frontend.git
----
-```bash
 cd arsmedicatech-frontend
+```
+
 ---
 
-### **1️⃣ Cloner le projet**
-```bash
-npm install```
-3️⃣ Ajouter la gestion multilingue (si nécessaire)
-bash
-Copier le code
-npm install i18next react-i18next i18next-browser-languagedetector
-4️⃣ Configurer l’environnement
-Créer un fichier .env à la racine du projet avec le contenu suivant :
+### **2️⃣ Installer les dépendances**
 
-ini
-Copier le code
+```bash
+npm install
+```
+
+---
+
+### **3️⃣ Ajouter la gestion multilingue (si nécessaire)**
+
+```bash
+npm install i18next react-i18next i18next-browser-languagedetector
+```
+
+---
+
+### **4️⃣ Configurer l’environnement**
+
+Créer un fichier `.env` à la racine du projet avec le contenu suivant :
+
+```ini
 API_URL=http://localhost:5000
 SENTRY_DSN=http://localhost:5000
-🧩 API_URL : correspond à l’adresse du backend Flask
-🧠 SENTRY_DSN : clé de surveillance des erreurs (désactivée en local)
+```
 
-5️⃣ Lancer le serveur de développement
-bash
-Copier le code
+🧩 **API_URL** : correspond à l’adresse du backend Flask  
+🧠 **SENTRY_DSN** : clé de surveillance des erreurs (désactivée en local)
+
+---
+
+### **5️⃣ Lancer le serveur de développement**
+
+```bash
 npm start
-L’application sera disponible à l’adresse suivante :
-👉 http://localhost:3012
+```
+
+L’application sera disponible à l’adresse suivante :  
+👉 [http://localhost:3012](http://localhost:3012)
