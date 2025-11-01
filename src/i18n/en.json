@@ -1,0 +1,45 @@
+{
+  "common": {
+  "logout": "Logout",
+  "guestUser": "Guest User",
+  "login": "Sign Up / Login",
+
+  "dashboard": "Dashboard",
+  "intakeForm": "Intake Form",
+  "healthMetrics": "Health Metrics",
+  "labResults": "Lab Results",
+  "messages": "Messages",
+  "schedule": "Schedule",
+  "settings": "Settings",
+  "uploads": "Uploads",
+  "notes": "Notes",
+
+  "hello": "Hello",
+  "remainingAppointments": "You have {{count}} remaining appointments today",
+
+  "welcome": "Welcome back, {{name}}!",
+  "totalPatients": "Total Patients",
+  "totalIncome": "Total Income",
+  "appointments": "Appointments",
+  "newAppointment": "New Appointment",
+    "patientName": "Patient Name",
+    "date": "Date",
+    "selected": "Selected",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "type": "Type",
+    "consultation": "Consultation",
+    "followUp": "Follow-up",
+    "emergency": "Emergency",
+    "routineCheck": "Routine Check-up",
+    "specialistVisit": "Specialist Visit",
+    "location": "Location",
+    "locationPlaceholder": "Room number, building, etc.",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes about the appointment",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "createAppointment": "Create Appointment"
+}
+
+}

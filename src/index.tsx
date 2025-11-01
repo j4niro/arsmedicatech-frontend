@@ -1,28 +1,27 @@
+import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import './index.css';
-// import * as serviceWorker from './serviceWorker';
 
+// 🟦 Import i18n (ajout pour la traduction)
+import './i18n/i18n'; 
+
+// 🟪 Sentry (suivi des erreurs)
 import * as Sentry from '@sentry/react';
-
 import { SENTRY_DSN } from './env_vars';
 
+// Vérification de la clé Sentry
 if (!SENTRY_DSN) {
-  throw new Error('SENTRY_DSN environment variable is not set');
+  console.warn('⚠️ SENTRY_DSN environment variable is not set — Sentry disabled.');
+} else {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    sendDefaultPii: true, // collecter les infos utilisateur de base
+  });
 }
 
-Sentry.init({
-  dsn: SENTRY_DSN,
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
-});
-
-// This is for plugins to register
-import React from 'react';
+// Rendre React disponible globalement (utilisé pour les plugins)
 window.React = React;
 
+// Point d’entrée principal : monter le composant racine
 ReactDOM.render(<App />, document.getElementById('root'));
-// ReactDOM.render(<h3>Test</h3>, document.getElementById('root'));
-
-// serviceWorker.unregister();

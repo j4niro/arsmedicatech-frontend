@@ -1,0 +1,46 @@
+{
+  "common":{
+  "logout": "Déconnexion",
+  "guestUser": "Utilisateur invité",
+  "login": "S'inscrire / Se connecter",
+
+  "dashboard": "Tableau de bord",
+  "intakeForm": "Formulaire d’admission",
+  "healthMetrics": "Indicateurs de santé",
+  "labResults": "Résultats d’analyses",
+  "messages": "Messages",
+  "schedule": "Planning",
+  "settings": "Paramètres",
+  "uploads": "Téléversements",
+  "notes": "Notes",
+
+  "hello": "Bonjour",
+  "remainingAppointments": "Il vous reste {{count}} rendez-vous aujourd’hui",
+
+  "welcome": "Bon retour, {{name}} !",
+  "totalPatients": "Nombre total de patients",
+  "totalIncome": "Revenu total",
+  "appointments": "Rendez-vous",
+  "newAppointment": "Nouveau rendez-vous",
+    "patientName": "Nom du patient",
+    "date": "Date",
+    "selected": "Sélectionné",
+    "startTime": "Heure de début",
+    "endTime": "Heure de fin",
+    "type": "Type",
+    "consultation": "Consultation",
+    "followUp": "Suivi",
+    "emergency": "Urgence",
+    "routineCheck": "Contrôle de routine",
+    "specialistVisit": "Visite spécialiste",
+    "location": "Lieu",
+    "locationPlaceholder": "Numéro de salle, bâtiment, etc.",
+    "notes": "Remarques",
+    "notesPlaceholder": "Notes supplémentaires concernant le rendez-vous",
+    "cancel": "Annuler",
+    "creating": "Création en cours...",
+    "createAppointment": "Créer un rendez-vous"
+
+}
+
+}
