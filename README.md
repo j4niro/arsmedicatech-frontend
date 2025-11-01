@@ -36,7 +36,7 @@ npm install
 
 ---
 
-### **3️⃣ Ajouter la gestion multilingue (si nécessaire)**
+### **3️⃣ Ajouter la gestion multilingue **
 
 ```bash
 npm install i18next react-i18next i18next-browser-languagedetector
