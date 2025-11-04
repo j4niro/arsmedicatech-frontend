@@ -9,19 +9,11 @@ const getEnvVar = (key: string, fallback: string = ''): string => {
   return fallback;
 };
 
-const API_URL = getEnvVar('API_URL') || getEnvVar('REACT_APP_API_URL') || '';
-if (!API_URL) {
-  throw new Error('API_URL environment variable is not set');
-}
-
+const API_URL = getEnvVar('API_URL') || getEnvVar('REACT_APP_API_URL') || 'http://localhost:5000';
 console.log('API_URL:', API_URL);
 
-const SENTRY_DSN =
-  getEnvVar('SENTRY_DSN') || getEnvVar('REACT_APP_SENTRY_DSN') || '';
+const SENTRY_DSN = getEnvVar('SENTRY_DSN') || getEnvVar('REACT_APP_SENTRY_DSN') || 'disabled';
 console.log('SENTRY_DSN:', SENTRY_DSN);
-if (!SENTRY_DSN) {
-  console.warn('SENTRY_DSN environment variable is not set');
-}
 
 console.log('SENTRY_DSN:', SENTRY_DSN);
 
