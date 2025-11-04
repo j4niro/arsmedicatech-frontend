@@ -1,0 +1,52 @@
+/* Styles for the reusable SearchBox component
+ * These styles mirror the search bar in the Topbar but live separately so
+ * search inputs used outside the Topbar (e.g. Patients page) also inherit
+ * dark mode behaviour. */
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #f7fafc;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.search-icon {
+  color: #a0aec0;
+  margin-right: 0.5rem;
+}
+
+.search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  font-size: 1rem;
+  color: #2d3748;
+}
+
+/* Dark mode overrides */
+.dark .search-input-wrapper {
+  background-color: #1e293b;
+  border-color: #374151;
+}
+
+.dark .search-input-wrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dark .search-icon {
+  color: #9ca3af;
+}
+
+.dark .search-input {
+  color: #f9fafb;
+}

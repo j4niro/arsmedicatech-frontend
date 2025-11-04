@@ -13,6 +13,11 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Dark mode: increase overlay opacity to better contrast against the dark backdrop */
+.dark .signup-popup-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -160,6 +165,56 @@
 
 .popup-login-button:hover {
   color: #5a67d8;
+}
+
+/* Dark mode overrides */
+.dark .signup-popup {
+  background-color: #1e293b;
+  color: #f9fafb;
+}
+
+.dark .popup-close-button {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .popup-close-button:hover {
+  background: #4b5563;
+  color: #ffffff;
+}
+
+.dark .popup-content h2 {
+  color: #f9fafb;
+}
+
+.dark .popup-description {
+  color: #d1d5db;
+}
+
+.dark .benefit-item {
+  color: #f9fafb;
+}
+
+.dark .benefit-icon {
+  color: #10b981;
+}
+
+.dark .popup-login-link {
+  color: #a5b4fc;
+}
+
+.dark .popup-login-button {
+  color: #c7d2fe;
+}
+
+.dark .popup-signup-button {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  color: #ffffff;
+}
+
+.dark .popup-signup-button:hover {
+  box-shadow: 0 8px 25px rgba(90, 103, 216, 0.3);
 }
 
 /* Responsive design */

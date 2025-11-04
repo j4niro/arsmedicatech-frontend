@@ -175,3 +175,51 @@
   font-style: italic;
   grid-column: 1 / -1;
 }
+
+/*
+ * Dark mode overrides for the schedule page. These styles ensure that
+ * schedule-specific elements (guest notice, appointment cards, calendar
+ * selections, and empty states) adopt a dark appearance and maintain
+ * sufficient contrast when the `.dark` class is applied to `<html>`.
+ */
+
+.dark .guest-notice {
+  background-color: #1e293b;
+  color: #d1d5db;
+  border: 1px solid #374151;
+}
+
+.dark .guest-action-button {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+}
+.dark .guest-action-button:hover {
+  background-color: #2563eb;
+}
+
+.dark .has-appointments,
+.dark .selected-date {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark .appointment-card {
+  background-color: #1e293b;
+  border-color: #374151;
+  color: #f9fafb;
+}
+.dark .appointment-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark .appointment-time,
+.dark .appointment-patient,
+.dark .appointment-type,
+.dark .appointment-notes {
+  color: #f9fafb;
+}
+
+.dark .no-appointments {
+  color: #9ca3af;
+}

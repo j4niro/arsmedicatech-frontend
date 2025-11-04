@@ -11,6 +11,195 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode base styles.  When the `.dark` class is applied to <html>
+   (via ThemeContext), set a dark background and light text. We avoid
+   using a global invert filter because it can lead to poor contrast in
+   some components (e.g., modals or forms). Instead we define explicit
+   overrides for common containers throughout the application. */
+.dark body {
+  background-color: #0f172a; /* dark slate */
+  color: #f9fafb; /* light slate */
+}
+
+/* Provide a sensible default link colour in dark mode */
+.dark a {
+  color: #60a5fa; /* light blue */
+}
+
+/* Headings in dark mode should be bright for readability */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: #f9fafb;
+}
+
+/* Dark mode overrides for main layout containers. These selectors ensure
+   that the primary content area, cards and forms have dark backgrounds
+   and light text. */
+.dark .main-container,
+.dark .main-content {
+  background-color: #0f172a;
+  color: #f9fafb;
+}
+
+.dark .card,
+.dark .profile-section,
+.dark .form-section,
+.dark .profile-item,
+.dark .form-group,
+.dark .user-result,
+.dark .tool-usage-item,
+.dark .option-card,
+.dark .option-card.selected {
+  background-color: #1e293b; /* dark blue-gray */
+  color: #f9fafb;
+  border-color: #374151; /* subtle border */
+}
+
+.dark .profile-section h2,
+.dark .form-section h2,
+.dark .option-card h3 {
+  color: #f9fafb;
+}
+
+/* Input fields in dark mode */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1e293b;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+/* Placeholder text should be lighter in dark mode */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Buttons inside dark containers should remain legible */
+.dark button {
+  color: inherit;
+}
+
+/*
+ * Global dark mode overrides for common Tailwind utility classes.  Many
+ * components in this project rely on Tailwind classes such as `bg-white`,
+ * `bg-gray-50` or `text-gray-900` to set colours. Without explicit dark
+ * variants, these elements remain light on dark backgrounds.  The rules
+ * below override those light classes when the `.dark` class is present
+ * on the `<html>` element.
+ */
+
+/* Light backgrounds -> dark backgrounds */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-gray-200,
+.dark .bg-blue-50,
+.dark .bg-purple-50,
+.dark .bg-red-50,
+.dark .bg-yellow-50,
+.dark .bg-green-50 {
+  background-color: #1e293b !important;
+  color: #f9fafb !important;
+}
+
+/* Gradient backgrounds (used on OptimalTableDemo) -> solid dark */
+.dark .bg-gradient-to-br.from-gray-50.to-gray-100 {
+  background-image: none !important;
+  background-color: #0f172a !important;
+}
+
+/* Table backgrounds and borders */
+.dark table {
+  background-color: #1e293b;
+  color: #f9fafb;
+}
+.dark th,
+.dark td {
+  border-color: #374151;
+}
+
+/* Text colours */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #f9fafb !important;
+}
+
+.dark .text-blue-900,
+.dark .text-blue-800,
+.dark .text-blue-700 {
+  color: #c7d2fe !important;
+}
+
+/*
+ * MDX Editor dark mode inversion
+ * The MDXEditor component from @mdxeditor/editor does not provide built-in dark
+ * styles. To ensure the toolbar, editor background and icons render
+ * correctly in dark mode, we wrap it in a container (.mdx-editor-wrapper)
+ * and apply an invert+hue-rotate filter. Images are reverted so they keep
+ * their original colours.
+ */
+.dark .mdx-editor-wrapper {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.dark .mdx-editor-wrapper img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Additional dark mode overrides for coloured utility backgrounds and badges */
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-blue-200 {
+  background-color: #1e3a8a !important;
+  color: #c3dafe !important;
+}
+
+.dark .bg-green-100,
+.dark .bg-green-200 {
+  background-color: #065f46 !important;
+  color: #6ee7b7 !important;
+}
+
+.dark .bg-yellow-50,
+.dark .bg-yellow-100,
+.dark .bg-yellow-200 {
+  background-color: #78350f !important;
+  color: #fde68a !important;
+}
+
+/* Adjust lighter gray backgrounds used in light mode to dark surfaces */
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+  background-color: #1e293b !important;
+  color: #f9fafb !important;
+}
+
+/* Override mid-tone text colours to ensure readability */
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+/* Borders and dividing lines */
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-gray-400,
+.dark .divide-gray-100,
+.dark .divide-gray-200 {
+  border-color: #374151 !important;
+}
+
 code {
   font-family: 'Courier New', monospace;
 }

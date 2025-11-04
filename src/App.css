@@ -427,6 +427,66 @@ body {
   background: #5a67d8;
 }
 
+/*
+ * Dark mode overrides for dashboard and global card elements.  These rules ensure
+ * that common containers and call‑to‑action areas on the dashboard and other
+ * pages respect the dark theme. Without them, portions of the UI remain light
+ * (as seen on the Dashboard and Patients pages). These overrides target
+ * classes defined in this file such as `.card`, `.guest-notice` and
+ * `.guest-action-button`.
+ */
+
+/* Cards (statistics, appointments, activity, etc.) */
+.dark .card {
+  background-color: #1e293b;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+.dark .card-title {
+  color: #f9fafb;
+}
+
+/* Dashboard header and titles */
+.dark .dashboard-header h1,
+.dark .dashboard-header p,
+.dark .dashboard-title h1,
+.dark .dashboard-title p {
+  color: #f9fafb;
+}
+
+/* Guest notice boxes on Dashboard, Patients and Schedule */
+.dark .guest-notice {
+  background-color: #1e293b;
+  color: #d1d5db;
+  border-color: #374151;
+}
+
+.dark .guest-action-button {
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+}
+.dark .guest-action-button:hover {
+  background: #2563eb;
+}
+
+/* Admin setup panel in Dashboard */
+.dark .admin-setup {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f9fafb;
+}
+
+.dark .setup-admin-button {
+  background: #374151;
+  color: #f9fafb;
+  border: 1px solid #4b5563;
+}
+
+.dark .setup-admin-button:hover {
+  background: #4b5563;
+}
+
 /* Patient list styles */
 .patient-list-container {
   padding: 20px;

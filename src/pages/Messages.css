@@ -426,3 +426,206 @@
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
+/*
+ * Dark mode overrides for the entire Messages page.
+ * These rules ensure that the conversation list, chat window, authentication prompt,
+ * message bubbles and input areas use dark backgrounds and light text colours.
+ */
+.dark .messages-container {
+  /* maintain layout; background handled by child containers */
+}
+
+/* Conversations list (left panel) */
+.dark .conversations-list {
+  background-color: #1e293b;
+  border-right-color: #374151;
+}
+
+.dark .conversation-list-header {
+  background-color: #1e293b;
+  border-bottom-color: #374151;
+}
+
+.dark .conversation-list-title {
+  color: #f9fafb;
+}
+
+.dark .conversation-header-buttons .new-conversation-button {
+  border-color: #3b82f6;
+  background-color: #3b82f6;
+  color: #f9fafb;
+}
+
+.dark .conversation-header-buttons .new-conversation-button:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.dark .conversations-list ul li.conversation {
+  border-bottom-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .conversations-list ul li.conversation:hover {
+  background-color: #374151;
+}
+
+.dark .conversations-list ul li.conversation.active {
+  background-color: #374151;
+}
+
+.dark .conversation-name {
+  color: #f9fafb;
+}
+
+.dark .conversation-last {
+  color: #94a3b8;
+}
+
+.dark .no-conversations {
+  color: #94a3b8;
+}
+
+.dark .no-conversations p {
+  color: #94a3b8;
+}
+
+/* Chat window (right panel) */
+.dark .chat-window {
+  background-color: #0f172a;
+  color: #f9fafb;
+}
+
+.dark .chat-header {
+  background-color: #1e293b;
+  border-bottom-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .messages-list {
+  background-color: #0f172a;
+  color: #f9fafb;
+}
+
+.dark .message {
+  background-color: #1e293b;
+  color: #f9fafb;
+}
+
+.dark .message.me {
+  background-color: #374151;
+}
+
+.dark .message-sender {
+  color: #cbd5e1;
+}
+
+.dark .message-text code {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .message-text pre {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .message-text blockquote {
+  border-left-color: #475569;
+  color: #94a3b8;
+}
+
+.dark .message-text a {
+  color: #60a5fa;
+}
+
+.dark .message-input-container {
+  background-color: #1e293b;
+  border-top-color: #374151;
+}
+
+.dark .message-input-container input {
+  background-color: #0f172a;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .message-input-container input:disabled {
+  background-color: #374151;
+  color: #6b7280;
+}
+
+.dark .message-input-container button {
+  background-color: #3b82f6;
+  color: #f9fafb;
+}
+
+.dark .message-input-container button:hover {
+  background-color: #2563eb;
+}
+
+.dark .send-button-disabled {
+  background-color: #6b7280 !important;
+  color: #d1d5db !important;
+}
+
+.dark .no-conversation-selected {
+  color: #94a3b8;
+}
+
+.dark .loading-indicator {
+  color: #94a3b8;
+}
+
+.dark .loading-indicator::after {
+  border-color: #374151;
+  border-top-color: #3b82f6;
+}
+
+/* Authentication required prompt */
+.dark .auth-required-container {
+  background-color: #0f172a;
+}
+
+.dark .auth-required-content {
+  background-color: #1e293b;
+  color: #f9fafb;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dark .auth-required-content h2 {
+  color: #f9fafb;
+}
+
+.dark .auth-required-content p {
+  color: #d1d5db;
+}
+
+.dark .auth-required-button {
+  background-color: #3b82f6;
+  color: #f9fafb;
+}
+
+.dark .auth-required-button:hover {
+  background-color: #2563eb;
+}
+
+/* SSE Notification Test panel (NotificationTest component) inside Messages page; these styles override inline defaults */
+.dark .notification-test-container {
+  background-color: #1e293b;
+  border: 1px solid #374151;
+  color: #f9fafb;
+}
+.dark .notification-test-container button {
+  color: #f9fafb;
+}
+.dark .notification-test-container .status-box {
+  background-color: #374151;
+  border-color: #475569;
+  color: #f9fafb;
+}
+.dark .notification-test-container .instructions {
+  color: #94a3b8;
+}

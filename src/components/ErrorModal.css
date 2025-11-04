@@ -133,6 +133,72 @@
   border-color: #9ca3af;
 }
 
+/* Dark mode overrides */
+.dark .error-modal {
+  background: #1e293b;
+  color: #f9fafb;
+}
+
+.dark .error-modal-header {
+  border-bottom: 1px solid #374151;
+}
+
+.dark .error-modal-title {
+  color: #f87171; /* red-400 */
+}
+
+.dark .error-modal-close {
+  background: #374151;
+  color: #f9fafb;
+  border-color: transparent;
+}
+
+.dark .error-modal-close:hover {
+  background: #4b5563;
+  color: #ffffff;
+}
+
+.dark .error-modal-body {
+  color: #d1d5db;
+}
+
+.dark .error-modal-description {
+  color: #d1d5db;
+}
+
+.dark .error-modal-footer {
+  border-top: 1px solid #374151;
+}
+
+.dark .error-modal-action-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.dark .error-modal-action-button:hover {
+  background: #1d4ed8;
+}
+
+.dark .error-modal-action-button:active {
+  background: #1e40af;
+}
+
+.dark .error-modal-dismiss-button {
+  background: #374151;
+  color: #f9fafb;
+  border: 1px solid #4b5563;
+}
+
+.dark .error-modal-dismiss-button:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #ffffff;
+}
+
+.dark .error-modal-dismiss-button:active {
+  background: #475569;
+}
+
 .error-modal-dismiss-button:active {
   background: #d1d5db;
 }

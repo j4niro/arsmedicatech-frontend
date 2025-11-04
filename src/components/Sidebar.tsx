@@ -4,6 +4,7 @@ import { usePluginWidgets } from '../hooks/usePluginWidgets';
 import logger from '../services/logging';
 import './Sidebar.css';
 import { useUser } from './UserContext';
+import { useTheme } from './ThemeContext';
 // It is recommended to use an icon library like react-icons
 // import { FiGrid, FiUsers, FiMessageSquare, FiCalendar } from 'react-icons/fi';
 
@@ -12,14 +13,23 @@ const Sidebar = () => {
   const userType = user?.role || 'guest';
   const widgets = usePluginWidgets();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { theme } = useTheme();
 
   logger.debug('Sidebar user:', user);
 
   if (isLoading) return null; // or a spinner
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
+    <aside
+      className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${
+        theme === 'dark' ? 'sidebar-dark-mode' : 'sidebar-light-mode'
+      }`}
+    >
+      <div
+        className={`sidebar-header ${
+          theme === 'dark' ? 'sidebar-header-dark-mode' : 'sidebar-header-light-mode'
+        }`}
+      >
         <div className="logo-container">ArsMedicaTech</div>
         <div className="release-info">Version 0.0.1 (alpha)</div>
         <button
@@ -181,10 +191,16 @@ const Sidebar = () => {
         </ul>
       </nav>
       {!isCollapsed && (
-        <div className="sidebar-footer">
+        <div
+          className={`sidebar-footer ${
+            theme === 'dark' ? 'sidebar-footer-dark-mode' : 'sidebar-footer-light-mode'
+          }`}
+        >
           <div className="corner-user-avatar"></div>
           <div className="corner-user-info">
-            <h4>Hello {user?.username}</h4>
+            <h4>
+              Hello {user?.username}
+            </h4>
             <p>
               You have {user?.appointments || 0} remaining appointments
               scheduled today

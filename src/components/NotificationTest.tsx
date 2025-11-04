@@ -50,7 +50,10 @@ const NotificationTest: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', border: '1px solid #ccc', margin: '10px' }}>
+    <div
+      className="notification-test-container"
+      style={{ padding: '20px', border: '1px solid #ccc', margin: '10px' }}
+    >
       <h3>SSE Notification Test</h3>
       <p>Use these buttons to test the Server-Sent Events functionality:</p>
 
@@ -87,6 +90,7 @@ const NotificationTest: React.FC = () => {
 
       {status && (
         <div
+          className="status-box"
           style={{
             padding: '10px',
             backgroundColor: '#f8f9fa',
@@ -98,7 +102,10 @@ const NotificationTest: React.FC = () => {
         </div>
       )}
 
-      <div style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
+      <div
+        className="instructions"
+        style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}
+      >
         <p>
           <strong>Instructions:</strong>
         </p>

@@ -188,3 +188,71 @@
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
   transform: translateY(-1px);
 }
+
+/* Theme toggle button styles */
+/* Theme toggle button styles */
+.theme-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+/* Provide a stronger hover effect and larger icon by default */
+.theme-toggle-button:hover {
+  color: #333;
+  transform: scale(1.05);
+}
+
+/* Dark mode overrides */
+.dark .topbar {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+  color: #f9fafb;
+}
+
+.dark .topbar .profile-container {
+  background-color: #374151;
+  border: 1px solid #4b5563;
+}
+
+.dark .topbar .user-name,
+.dark .topbar .user-role {
+  color: #f9fafb;
+}
+
+.dark .topbar .logout-button {
+  color: #f9fafb;
+}
+
+.dark .topbar .logout-button:hover {
+  background-color: #4b5563;
+  color: #ffffff;
+}
+
+.dark .topbar .auth-button {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+.dark .theme-toggle-button {
+  color: #f9fafb;
+}
+
+/* Adjust guest user label and auth button colours in dark mode */
+.dark .guest-label {
+  color: #d1d5db;
+}
+
+.dark .auth-button {
+  /* keep gradient but ensure text remains legible */
+  color: #ffffff;
+}
+
+/* Dark mode for the guest authentication container */
+.dark .guest-auth {
+  background-color: transparent;
+}

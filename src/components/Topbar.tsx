@@ -1,9 +1,11 @@
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Notification } from '../hooks/useNotifications';
 import { useSignupPopup } from '../hooks/useSignupPopup';
 import authService from '../services/auth';
 import NotificationIndicator from './NotificationIndicator';
 import SignupPopup from './SignupPopup';
+// Import theme context to enable dark/light toggle
+import { useTheme } from './ThemeContext';
 import './Topbar.css';
 import { useUser } from './UserContext';
 
@@ -20,6 +22,9 @@ interface Props {
 export default function Topbar(props: Props) {
   const { user, isAuthenticated, setUser } = useUser();
   const { isPopupOpen, showSignupPopup, hideSignupPopup } = useSignupPopup();
+
+  // Retrieve current theme and toggler
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -46,6 +51,19 @@ export default function Topbar(props: Props) {
               onClearAll={props.onClearAll}
             />
           )}
+
+          {/* Theme toggle: show intuitive sun/moon icon based on current theme. Use heroicons for better clarity */}
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-button"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <SunIcon className="h-6 w-6" />
+            ) : (
+              <MoonIcon className="h-6 w-6" />
+            )}
+          </button>
 
           <div className="auth-status">
             {isAuthenticated && user ? (

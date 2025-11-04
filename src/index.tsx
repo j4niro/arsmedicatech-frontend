@@ -22,7 +22,15 @@ Sentry.init({
 import React from 'react';
 window.React = React;
 
-ReactDOM.render(<App />, document.getElementById('root'));
+// Wrap the application with ThemeProvider to enable dark/light mode toggling
+import { ThemeProvider } from './components/ThemeContext';
+
+ReactDOM.render(
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>,
+  document.getElementById('root'),
+);
 // ReactDOM.render(<h3>Test</h3>, document.getElementById('root'));
 
 // serviceWorker.unregister();

@@ -188,6 +188,98 @@
   color: #5a67d8;
 }
 
+/* Dark mode overrides */
+.dark .login-container {
+  background: linear-gradient(135deg, #1e3a8a 0%, #43159f 100%);
+  color: #f9fafb;
+}
+
+.dark .login-form {
+  background: #1e293b;
+  color: #f9fafb;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.dark .form-close-button {
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #f9fafb;
+}
+
+.dark .form-close-button:hover {
+  background: #4b5563;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.dark .login-form h2 {
+  color: #f9fafb;
+}
+
+.dark .login-subtitle {
+  color: #d1d5db;
+}
+
+.dark .form-group label {
+  color: #d1d5db;
+}
+
+.dark .form-group input {
+  background: #1e293b;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.dark .form-group input:focus {
+  border-color: #5a67d8;
+  box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+}
+
+.dark .form-group input.error {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+.dark .form-group input:disabled {
+  background-color: #374151;
+  color: #6b7280;
+}
+
+.dark .error-message {
+  color: #ef4444;
+}
+
+.dark .general-error {
+  background-color: #451a15;
+  border: 1px solid #7f1d1d;
+  color: #fca5a5;
+}
+
+.dark .login-button {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  color: #ffffff;
+}
+
+.dark .login-button:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(90, 103, 216, 0.3);
+}
+
+.dark .login-footer {
+  border-top: 1px solid #374151;
+}
+
+.dark .login-footer p {
+  color: #9ca3af;
+}
+
+.dark .link-button {
+  color: #a5b4fc;
+}
+
+.dark .link-button:hover {
+  color: #818cf8;
+}
+
 /* Responsive design */
 @media (max-width: 480px) {
   .login-container {

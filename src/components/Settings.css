@@ -199,6 +199,180 @@
   margin-top: 0.25rem;
 }
 
+/* Dark mode overrides */
+.dark .settings-container {
+  background: #1e293b;
+  color: #f9fafb;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dark .settings-tabs {
+  border-bottom: 2px solid #374151;
+}
+
+.dark .tab-button {
+  color: #9ca3af;
+}
+
+.dark .tab-button:hover {
+  color: #f9fafb;
+  background: #374151;
+}
+
+.dark .tab-button.active {
+  color: #c7d2fe;
+  border-bottom-color: #5a67d8;
+  background: #374151;
+}
+
+.dark .profile-header h1,
+.dark .edit-profile-header h1 {
+  color: #f9fafb;
+}
+
+.dark .profile-header p,
+.dark .edit-profile-header p {
+  color: #d1d5db;
+}
+
+.dark .profile-section,
+.dark .form-section {
+  background: #1e293b;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .profile-section h2,
+.dark .form-section h2 {
+  color: #f9fafb;
+}
+
+.dark .profile-grid .profile-item {
+  background: #374151;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+.dark .profile-label {
+  color: #d1d5db;
+}
+
+.dark .profile-value {
+  color: #f9fafb;
+}
+
+/* Additional dark mode overrides for settings sections */
+/* Ensure all settings panels adopt a dark background and readable text */
+.dark .settings-section {
+  background: #1e293b;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .settings-section h2 {
+  color: #f9fafb;
+}
+
+.dark .section-description {
+  color: #94a3b8;
+}
+
+.dark .user-info .info-row,
+.dark .security-info .info-row,
+.dark .usage-info .info-row {
+  background: #374151;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+.dark .info-row label {
+  color: #cbd5e1;
+}
+
+.dark .info-row span {
+  color: #f9fafb;
+}
+
+.dark .usage-progress {
+  background: #374151;
+}
+
+.dark .usage-bar {
+  /* keep green gradient but slightly dim in dark mode */
+  background: linear-gradient(90deg, #34d399, #059669);
+}
+
+.dark .api-key-status,
+.dark .api-key-form {
+  background: #374151;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+.dark .status-indicator.success {
+  color: #10b981;
+}
+
+.dark .api-key-form label {
+  color: #cbd5e1;
+}
+
+.dark .api-key-form .form-input {
+  background: #1e293b;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .api-key-form .form-help {
+  color: #94a3b8;
+}
+
+/* Form and profile action containers in dark mode */
+.dark .form-actions,
+.dark .profile-actions {
+  background: #1e293b;
+  border-color: #374151;
+}
+
+.dark .role-badge {
+  /* use slightly dimmed blue for roles in dark mode */
+  background: #3b82f6;
+  color: #f9fafb;
+}
+
+.dark .form-group label {
+  color: #d1d5db;
+}
+
+.dark .form-input,
+.dark .form-textarea,
+.dark .form-select {
+  background: #1e293b;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .form-input:focus,
+.dark .form-textarea:focus {
+  border-color: #5a67d8;
+  box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+}
+
+.dark .form-input.error,
+.dark .form-textarea.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.dark .form-input.disabled {
+  background: #374151;
+  color: #6b7280;
+}
+
+.dark .error-message {
+  color: #f87171;
+}
+
 .form-help {
   color: #6b7280;
   font-size: 0.75rem;

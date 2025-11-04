@@ -171,3 +171,37 @@ nav a.active {
 .sidebar * {
   transition: all 0.3s ease;
 }
+
+/* Additional dark mode overrides for better readability */
+.sidebar-dark-mode nav a {
+  color: #ffffff;
+}
+.sidebar-dark-mode nav a:hover {
+  background-color: #333;
+  color: #ffffff;
+}
+.sidebar-dark-mode nav a.active {
+  background-color: #007bff;
+  color: #ffffff;
+}
+.sidebar-dark-mode .sidebar-toggle {
+  color: #ffffff;
+}
+.sidebar-dark-mode .sidebar-toggle:hover {
+  background-color: #333;
+}
+.sidebar-dark-mode .logo-container {
+  color: #ffffff;
+}
+.sidebar-light-mode .logo-container {
+  color: #000000;
+}
+.sidebar-dark-mode .release-info {
+  color: #888888;
+}
+.sidebar-dark-mode .corner-user-info h4 {
+  color: #ffffff;
+}
+.sidebar-dark-mode .corner-user-info p {
+  color: #aaaaaa;
+}

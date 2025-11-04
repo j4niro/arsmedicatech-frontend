@@ -410,23 +410,32 @@ const Schedule = () => {
 
       {/* Debug info */}
       {typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development' && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 10,
-            right: 10,
-            background: 'white',
-            padding: 10,
-            border: '1px solid #ccc',
-            fontSize: '12px',
-          }}
-        >
-          Modal Open: {isModalOpen.toString()}
-          <br />
-          Selected Date: {selectedDate?.toDateString() || 'None'}
-          <br />
-          Appointments: {appointments.length}
-        </div>
+        (() => {
+          // Use theme to adjust debug panel colours for dark mode
+          const { theme } = require('../components/ThemeContext').useTheme();
+          const isDark = theme === 'dark';
+          return (
+            <div
+              style={{
+                position: 'fixed',
+                bottom: 10,
+                right: 10,
+                background: isDark ? '#1e293b' : 'white',
+                padding: 10,
+                border: `1px solid ${isDark ? '#374151' : '#ccc'}`,
+                fontSize: '12px',
+                color: isDark ? '#f9fafb' : '#333',
+                zIndex: 50,
+              }}
+            >
+              Modal Open: {isModalOpen.toString()}
+              <br />
+              Selected Date: {selectedDate?.toDateString() || 'None'}
+              <br />
+              Appointments: {appointments.length}
+            </div>
+          );
+        })()
       )}
     </>
   );

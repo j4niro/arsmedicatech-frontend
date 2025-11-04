@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
 import { fileUploadAPI } from '../services/api';
 import logger from '../services/logging';
+import { useTheme } from '../components/ThemeContext';
 
 interface Upload {
   id: string;
@@ -28,6 +29,10 @@ const FileUpload: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Get current theme for styling adjustments
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Fetch uploads list
   const fetchUploads = useCallback(async () => {
@@ -81,19 +86,39 @@ const FileUpload: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto', padding: 24 }}>
-      <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24 }}>
+    <div
+      style={{
+        maxWidth: 600,
+        margin: '40px auto',
+        padding: 24,
+        color: isDark ? '#f9fafb' : '#333',
+      }}
+    >
+      <h2
+        style={{
+          fontSize: 28,
+          fontWeight: 700,
+          marginBottom: 24,
+          color: isDark ? '#f9fafb' : '#333',
+        }}
+      >
         File Upload
       </h2>
       <div
         {...getRootProps()}
         style={{
-          border: '2px dashed #888',
+          border: `2px dashed ${isDark ? '#475569' : '#888'}`,
           borderRadius: 12,
           padding: 40,
           textAlign: 'center',
-          background: isDragActive ? '#f0f9ff' : '#fafafa',
-          color: '#333',
+          background: isDragActive
+            ? isDark
+              ? '#334155'
+              : '#f0f9ff'
+            : isDark
+              ? '#1e293b'
+              : '#fafafa',
+          color: isDark ? '#f9fafb' : '#333',
           cursor: 'pointer',
           marginBottom: 24,
           transition: 'background 0.2s',
@@ -110,27 +135,56 @@ const FileUpload: React.FC = () => {
         )}
       </div>
       {error && (
-        <div style={{ color: '#ef4444', marginBottom: 12 }}>{error}</div>
+        <div
+          style={{ color: isDark ? '#f87171' : '#ef4444', marginBottom: 12 }}
+        >
+          {error}
+        </div>
       )}
       {success && (
-        <div style={{ color: '#22c55e', marginBottom: 12 }}>{success}</div>
+        <div
+          style={{ color: isDark ? '#22c55e' : '#22c55e', marginBottom: 12 }}
+        >
+          {success}
+        </div>
       )}
-      <h3 style={{ fontSize: 20, fontWeight: 600, margin: '24px 0 12px' }}>
+      <h3
+        style={{
+          fontSize: 20,
+          fontWeight: 600,
+          margin: '24px 0 12px',
+          color: isDark ? '#f9fafb' : '#333',
+        }}
+      >
         Your Uploads
       </h3>
       <div
         style={{
-          border: '1px solid #e5e7eb',
+          border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
           borderRadius: 8,
-          background: '#fff',
+          background: isDark ? '#1e293b' : '#fff',
         }}
       >
         {uploads.length === 0 ? (
-          <div style={{ padding: 24, color: '#888' }}>No uploads yet.</div>
+          <div
+            style={{
+              padding: 24,
+              color: isDark ? '#9ca3af' : '#888',
+            }}
+          >
+            No uploads yet.
+          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table
+            style={{ width: '100%', borderCollapse: 'collapse', color: isDark ? '#f9fafb' : '#333' }}
+          >
             <thead>
-              <tr style={{ background: '#f3f4f6' }}>
+              <tr
+                style={{
+                  background: isDark ? '#1e293b' : '#f3f4f6',
+                  color: isDark ? '#f9fafb' : '#333',
+                }}
+              >
                 <th style={{ padding: 10, textAlign: 'left', fontWeight: 500 }}>
                   File
                 </th>
@@ -150,21 +204,30 @@ const FileUpload: React.FC = () => {
                 <tr
                   key={u.id}
                   style={{
-                    borderBottom: '1px solid #f1f5f9',
+                    borderBottom: `1px solid ${isDark ? '#374151' : '#f1f5f9'}`,
                     cursor: u.status === 'completed' ? 'pointer' : 'default',
-                    backgroundColor:
-                      u.status === 'completed' ? '#f8fafc' : 'transparent',
+                    backgroundColor: u.status === 'completed'
+                      ? isDark
+                        ? '#374151'
+                        : '#f8fafc'
+                      : 'transparent',
                     transition: 'background-color 0.2s',
                   }}
                   onClick={() => handleUploadClick(u)}
                   onMouseEnter={e => {
                     if (u.status === 'completed') {
-                      e.currentTarget.style.backgroundColor = '#e2e8f0';
+                      e.currentTarget.style.backgroundColor = isDark
+                        ? '#475569'
+                        : '#e2e8f0';
                     }
                   }}
                   onMouseLeave={e => {
                     if (u.status === 'completed') {
-                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                      e.currentTarget.style.backgroundColor = u.status === 'completed'
+                        ? isDark
+                          ? '#374151'
+                          : '#f8fafc'
+                        : 'transparent';
                     }
                   }}
                 >
@@ -173,20 +236,20 @@ const FileUpload: React.FC = () => {
                   <td style={{ padding: 10 }}>
                     {new Date(u.date_uploaded).toLocaleString()}
                   </td>
-                  <td style={{ padding: 10 }}>
-                    <span
-                      style={{
-                        background: statusColors[u.status] || '#e5e7eb',
-                        color: '#222',
-                        borderRadius: 6,
-                        padding: '2px 10px',
-                        fontWeight: 500,
-                        fontSize: 14,
-                      }}
-                    >
-                      {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
-                    </span>
-                  </td>
+                    <td style={{ padding: 10 }}>
+                      <span
+                        style={{
+                          background: statusColors[u.status] || '#e5e7eb',
+                          color: '#222',
+                          borderRadius: 6,
+                          padding: '2px 10px',
+                          fontWeight: 500,
+                          fontSize: 14,
+                        }}
+                      >
+                        {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
+                      </span>
+                    </td>
                 </tr>
               ))}
             </tbody>

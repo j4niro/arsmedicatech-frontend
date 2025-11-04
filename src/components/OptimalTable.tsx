@@ -185,13 +185,13 @@ const OptimalTable: React.FC<OptimalTableProps> = ({
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               {columns.map(column => (
                 <th
                   key={column.key}
-                  className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider dark:text-gray-300"
                 >
                   <div className="flex items-center space-x-1">
                     <span>{column.header}</span>
@@ -210,11 +210,11 @@ const OptimalTable: React.FC<OptimalTableProps> = ({
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className="bg-white divide-y divide-gray-100 dark:bg-gray-800 dark:divide-gray-700">
             {tableData.map(row => (
               <tr
                 key={row.id}
-                className="hover:bg-gray-50 transition-colors duration-150"
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
               >
                 {columns.map(column => (
                   <td
@@ -254,7 +254,7 @@ const OptimalTable: React.FC<OptimalTableProps> = ({
       </div>
 
       {showAddRow && (!maxRows || tableData.length < maxRows) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
           <button
             onClick={handleAddRow}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
@@ -278,8 +278,8 @@ const OptimalTable: React.FC<OptimalTableProps> = ({
       )}
 
       {maxRows && tableData.length >= maxRows && (
-        <div className="px-6 py-3 bg-yellow-50 border-t border-yellow-200">
-          <p className="text-sm text-yellow-700">
+        <div className="px-6 py-3 bg-yellow-50 border-t border-yellow-200 dark:bg-yellow-200 dark:border-yellow-300">
+          <p className="text-sm text-yellow-700 dark:text-yellow-800">
             Maximum number of rows ({maxRows}) reached.
           </p>
         </div>

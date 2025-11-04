@@ -267,6 +267,102 @@
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
+/* Dark mode overrides */
+.dark .new-conversation-modal {
+  background: #1e293b;
+  color: #f9fafb;
+}
+
+.dark .modal-close-button {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .modal-close-button:hover {
+  background: #4b5563;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.dark .modal-content h2 {
+  color: #f9fafb;
+}
+
+.dark .modal-description {
+  color: #d1d5db;
+}
+
+.dark .option-card {
+  background: #374151;
+  border-color: #475569;
+  color: #f9fafb;
+}
+
+.dark .option-card:hover {
+  border-color: #6b7280;
+  background: #475569;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(90, 103, 216, 0.15);
+}
+
+.dark .option-card.selected {
+  border-color: #5a67d8;
+  background: #334155;
+  box-shadow: 0 4px 12px rgba(90, 103, 216, 0.2);
+}
+
+.dark .option-content h3 {
+  color: #f9fafb;
+}
+
+.dark .option-content p {
+  color: #d1d5db;
+}
+
+.dark .user-search-input {
+  background: #1e293b;
+  border: 2px solid #475569;
+  color: #f9fafb;
+}
+
+.dark .user-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.dark .search-results {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.dark .user-result {
+  background: #374151;
+  border-bottom: 1px solid #475569;
+  color: #f9fafb;
+}
+
+.dark .user-result:hover {
+  background: #475569;
+}
+
+.dark .user-name {
+  color: #f9fafb;
+}
+
+.dark .user-role {
+  color: #d1d5db;
+}
+
+.dark .search-loading,
+.dark .no-results {
+  color: #9ca3af;
+}
+
+.dark .start-chatbot-button {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  color: #ffffff;
+}
+
 /* Responsive design */
 @media (max-width: 480px) {
   .new-conversation-modal {
