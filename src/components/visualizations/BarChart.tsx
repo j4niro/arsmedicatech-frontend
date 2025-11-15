@@ -1,19 +1,18 @@
 import * as d3 from 'd3';
 import React, { useEffect } from 'react';
+import { useTranslation } from "react-i18next";
 
 export default function BarChart({
   data,
   lowerBound,
   upperBound,
 }: {
-  data: {
-    metricName: string;
-    points: { date: string; value: number | null }[];
-  }[];
+  data: { metricName: string; points: { date: string; value: number | null }[] }[];
   lowerBound?: number | '';
   upperBound?: number | '';
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!ref.current) return;
@@ -24,20 +23,13 @@ export default function BarChart({
     const width = 500 - margin.left - margin.right;
     const height = 300 - margin.top - margin.bottom;
 
-    // Flatten all points and get all unique dates
     const allPoints = data.flatMap(series => series.points);
     const allDates = Array.from(new Set(allPoints.map(d => d.date))).sort();
     const metrics = data.map(d => d.metricName);
 
-    // X scale for dates (grouped)
     const x0 = d3.scaleBand().domain(allDates).range([0, width]).padding(0.2);
-    // X1 for metrics within each date
-    const x1 = d3
-      .scaleBand()
-      .domain(metrics)
-      .range([0, x0.bandwidth()])
-      .padding(0.05);
-    // Y scale
+    const x1 = d3.scaleBand().domain(metrics).range([0, x0.bandwidth()]).padding(0.05);
+
     const y = d3
       .scaleLinear()
       .domain([
@@ -46,7 +38,7 @@ export default function BarChart({
       ])
       .nice()
       .range([height, 0]);
-    // Color
+
     const color = d3.scaleOrdinal(d3.schemeCategory10).domain(metrics);
 
     const svg = d3
@@ -57,22 +49,19 @@ export default function BarChart({
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // X axis
-    svg
-      .append('g')
+    svg.append('g')
       .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x0).tickFormat(d => d as string));
-    // Y axis
+      .call(d3.axisBottom(x0).tickFormat(d => t(d as string)));
+
     svg.append('g').call(d3.axisLeft(y));
 
-    // Draw bars
     svg
       .selectAll('g.date-group')
       .data(allDates)
       .enter()
       .append('g')
       .attr('class', 'date-group')
-      .attr('transform', d => `translate(${x0(d as string)},0)`)
+      .attr('transform', d => `translate(${x0(d) ?? 0},0)`)
       .selectAll('rect')
       .data(date =>
         metrics.map(metric => {
@@ -80,8 +69,7 @@ export default function BarChart({
           const point = series?.points.find(p => p.date === date);
           return {
             metric,
-            value: point && point.value !== null ? point.value : 0,
-            date,
+            value: point?.value ?? 0,
           };
         })
       )
@@ -93,27 +81,26 @@ export default function BarChart({
       .attr('height', d => height - y(d.value))
       .attr('fill', d => color(d.metric) as string);
 
-    // Legend
     const legend = svg
       .selectAll('.legend')
       .data(metrics)
       .enter()
       .append('g')
       .attr('class', 'legend')
-      .attr('transform', (d, i) => `translate(0,${i * 20})`);
-    legend
-      .append('rect')
+      .attr('transform', (_, i) => `translate(0,${i * 20})`);
+
+    legend.append('rect')
       .attr('x', width - 18)
       .attr('width', 18)
       .attr('height', 18)
       .style('fill', d => color(d) as string);
-    legend
-      .append('text')
+
+    legend.append('text')
       .attr('x', width - 24)
       .attr('y', 9)
       .attr('dy', '.35em')
       .style('text-anchor', 'end')
-      .text(d => d);
+      .text(d => d); // Non traduit
   }, [data, lowerBound, upperBound]);
 
   return <div ref={ref}></div>;

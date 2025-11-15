@@ -10,8 +10,10 @@ import { useSignupPopup } from '../hooks/useSignupPopup';
 import apiService from '../services/api';
 import authService from '../services/auth';
 import logger from '../services/logging';
+import { useTranslation } from "react-i18next";
 
 const Panel1 = () => {
+  const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
@@ -30,35 +32,28 @@ const Panel1 = () => {
 
   return (
     <header className="App-header">
-      <p>The current time is {currentTime}.</p>
-      <p>
-        <Link to="patients">Patients</Link>
-      </p>
-      <p>
-        <Link to="about">About</Link>
-      </p>
-      <p>
-        <Link to="contact">Contact</Link>
-      </p>
-      <button className="sidebar-toggle-button">Toggle Sidebar</button>
-      <button className="profile-button">Profile</button>
+      <p>{t("current_time")}: {currentTime}</p>
+      <p><Link to="patients">{t("Patients")}</Link></p>
+      <p><Link to="about">{t("About")}</Link></p>
+      <p><Link to="contact">{t("Contact")}</Link></p>
+
+      <button className="sidebar-toggle-button">{t("toggle_sidebar")}</button>
+      <button className="profile-button">{t("profile")}</button>
     </header>
   );
 };
 
 const DashboardOld = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="dashboard">
-      <h2>Dashboard</h2>
+      <h2>{t("Dashboard")}</h2>
       <div className="cards-grid">
-        <div className="card">
-          <Panel1 />
-        </div>
-        <div className="card">
-          <BarChart />
-        </div>
-        <div className="card">Panel 3</div>
-        <div className="card">Panel 4</div>
+        <div className="card"><Panel1 /></div>
+        <div className="card"><BarChart /></div>
+        <div className="card">{t("Panel 3")}</div>
+        <div className="card">{t("Panel 4")}</div>
       </div>
     </div>
   );
@@ -78,113 +73,121 @@ const AuthenticatedDashboard = ({
   user: any;
   onLogout: () => void;
 }): JSX.Element => {
+  const { t } = useTranslation();
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
         <div className="dashboard-title">
-          <h1>Dashboard</h1>
-          <p>Welcome back, {user.first_name || user.username}!</p>
+          <h1>{t("Dashboard")}</h1>
+          <p>{t("welcome_back")}, {user.first_name || user.username}!</p>
         </div>
         <div className="user-info">
           <span className="user-role">{user.role}</span>
           <button onClick={onLogout} className="logout-button">
-            Logout
+            {t("Logout")}
           </button>
         </div>
       </div>
+
       <div className="dashboard-grid">
         <div className="card stats-card">
-          <div className="card-title">Total Patients</div>
+          <div className="card-title">{t("Total Patients")}</div>
           <h2>{dashboardData.totalPatients}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Total Income</div>
+          <div className="card-title">{t("Total Income")}</div>
           <h2>${dashboardData.totalIncome}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Appointments</div>
+          <div className="card-title">{t("Appointments")}</div>
           <h2>{dashboardData.appointments}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Reports</div>
+          <div className="card-title">{t("Reports")}</div>
           <h2>{dashboardData.reports}</h2>
           <p>+2.7%</p>
         </div>
 
         <div className="card appointments-card">
-          <div className="card-title">Appointments</div>
-          {/* This would be a list rendered from data */}
+          <div className="card-title">{t("Appointments")}</div>
         </div>
 
         <div className="card activity-card">
-          <div className="card-title">Recent Activity</div>
-          {/* This would be a list rendered from data */}
+          <div className="card-title">{t("Recent Activity")}</div>
         </div>
       </div>
     </div>
   );
 };
 
-const PublicDashboard = ({
-  showSignupPopup,
-}: {
-  showSignupPopup: () => void;
-}) => {
+const PublicDashboard = ({ showSignupPopup }: { showSignupPopup: () => void }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
         <div className="dashboard-title">
-          <h1>Dashboard</h1>
-          <p>Welcome to ArsMedicaTech - Your Healthcare Management Solution</p>
+          <h1>{t("Dashboard")}</h1>
+          <p>{t("welcome_public_message")}</p>
         </div>
+
         <div className="user-info">
-          <span className="user-role">Guest</span>
+          <span className="user-role">{t("Guest")}</span>
           <button onClick={showSignupPopup} className="signup-button">
-            Sign Up
+            {t("Sign Up")}
           </button>
         </div>
       </div>
+
       <div className="dashboard-grid">
+
         <div className="card stats-card">
-          <div className="card-title">Total Patients</div>
+          <div className="card-title">{t("Total Patients")}</div>
           <h2>{dashboardData.totalPatients}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Total Income</div>
+          <div className="card-title">{t("Total Income")}</div>
           <h2>${dashboardData.totalIncome}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Appointments</div>
+          <div className="card-title">{t("Appointments")}</div>
           <h2>{dashboardData.appointments}</h2>
           <p>+2.7%</p>
         </div>
+
         <div className="card stats-card">
-          <div className="card-title">Reports</div>
+          <div className="card-title">{t("Reports")}</div>
           <h2>{dashboardData.reports}</h2>
           <p>+2.7%</p>
         </div>
 
         <div className="card appointments-card">
-          <div className="card-title">Appointments</div>
+          <div className="card-title">{t("Appointments")}</div>
           <div className="guest-notice">
-            <p>Sign up to view and manage appointments</p>
+            <p>{t("signup_to_view_appointments")}</p>
             <button onClick={showSignupPopup} className="guest-action-button">
-              Get Started
+              {t("Get Started")}
             </button>
           </div>
         </div>
 
         <div className="card activity-card">
-          <div className="card-title">Recent Activity</div>
+          <div className="card-title">{t("Recent Activity")}</div>
           <div className="guest-notice">
-            <p>Sign up to view recent activity</p>
+            <p>{t("signup_to_view_recent_activity")}</p>
             <button onClick={showSignupPopup} className="guest-action-button">
-              Get Started
+              {t("Get Started")}
             </button>
           </div>
         </div>
@@ -203,27 +206,28 @@ interface UserData {
 }
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user, isAuthenticated, setUser, isLoading: userLoading } = useUser();
+
   const [showLogin, setShowLogin] = useState(true);
   const {
     isPopupOpen,
     showSignupPopup,
     hideSignupPopup: originalHideSignupPopup,
   } = useSignupPopup();
+
   const [usersExist, setUsersExist] = useState<boolean | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Custom hideSignupPopup that also clears auth query parameter
   const hideSignupPopup = () => {
     originalHideSignupPopup();
-    // Clear auth query parameter
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete('auth');
     window.history.replaceState(null, '', `?${newSearchParams.toString()}`);
   };
 
-  // Check for auth query parameter and automatically show the appropriate form
+  // Detect parameters ?auth=login/register
   useEffect(() => {
     const authParam = searchParams.get('auth');
     if (authParam === 'login' && !isAuthenticated) {
@@ -235,37 +239,19 @@ const Dashboard = () => {
     }
   }, [searchParams, isAuthenticated, showSignupPopup]);
 
-  // Debug logging
-  logger.debug('Dashboard render - user:', user);
-  logger.debug('Dashboard render - isAuthenticated:', isAuthenticated);
-  logger.debug('Dashboard render - userLoading:', userLoading);
-
-  // Track authentication state changes
   useEffect(() => {
-    logger.debug('Dashboard - Authentication state changed:', {
-      user,
-      isAuthenticated,
-      userLoading,
-    });
-  }, [user, isAuthenticated, userLoading]);
-
-  useEffect(() => {
-    // Check if any users exist
     const checkUsersExist = async () => {
       try {
         const response = await apiService.checkUsersExist();
         setUsersExist(response.users_exist);
       } catch (error) {
-        // If error (e.g. 403), assume users exist to avoid exposing admin setup
         setUsersExist(true);
       }
     };
-
     checkUsersExist();
   }, []);
 
   const handleLogin = (userData: UserData): void => {
-    logger.debug('Dashboard handleLogin called with:', userData);
     const userForContext = {
       id: userData.id.toString(),
       username: userData.username,
@@ -274,17 +260,11 @@ const Dashboard = () => {
       last_name: userData.last_name,
       role: userData.role,
     };
-    logger.debug('Setting user in context:', userForContext);
     setUser(userForContext);
-    logger.debug('User set in context successfully');
-
-    // Close the popup after successful login
     hideSignupPopup();
-    logger.debug('Signup popup closed after login');
   };
 
   const handleRegister = (userData: UserData): void => {
-    logger.debug('Dashboard handleRegister called with:', userData);
     const userForContext = {
       id: userData.id.toString(),
       username: userData.username,
@@ -293,49 +273,38 @@ const Dashboard = () => {
       last_name: userData.last_name,
       role: userData.role,
     };
-    logger.debug('Setting user in context:', userForContext);
     setUser(userForContext);
-    logger.debug('User set in context successfully');
-
-    // Close the popup after successful registration
     hideSignupPopup();
-    logger.debug('Signup popup closed after registration');
-
-    // Redirect admin to organization creation page
     if (userForContext.role === 'admin') {
       navigate('/organization');
     }
   };
 
   const handleLogout = async () => {
-    logger.debug('Dashboard handleLogout called');
     await authService.logout();
     setUser(null);
-    logger.debug('User cleared from context');
     window.location.href = '/';
   };
 
   const handleSetupAdmin = async () => {
     const result = await authService.setupDefaultAdmin();
     if (result.success) {
-      alert('Default admin user created! Username: admin, Password: Admin123!');
+      alert(t("default_admin_created"));
     } else {
-      alert('Error creating admin user: ' + result.error);
+      alert(t("default_admin_error") + result.error);
     }
   };
 
   if (userLoading) {
-    logger.debug('Dashboard - showing loading state');
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Loading...</p>
+        <p>{t("Loading")}</p>
       </div>
     );
   }
 
   if (isAuthenticated && user) {
-    logger.debug('Dashboard - showing authenticated dashboard');
     return (
       <>
         <AuthenticatedDashboard user={user} onLogout={handleLogout} />
@@ -344,14 +313,11 @@ const Dashboard = () => {
     );
   }
 
-  logger.debug('Dashboard - showing public dashboard');
-  logger.debug('Dashboard - popup state:', { isPopupOpen, showLogin });
   return (
     <>
       <PublicDashboard showSignupPopup={showSignupPopup} />
       <SignupPopup isOpen={isPopupOpen} onClose={hideSignupPopup} />
 
-      {/* Show auth forms when popup is triggered */}
       {isPopupOpen && (
         <div className="auth-overlay">
           <div className="auth-container">
@@ -369,19 +335,12 @@ const Dashboard = () => {
               />
             )}
 
-            {/* Admin setup button - only show if no users exist */}
             {usersExist === false && (
               <div className="admin-setup">
-                <button
-                  onClick={handleSetupAdmin}
-                  className="setup-admin-button"
-                >
-                  Setup Default Admin
+                <button onClick={handleSetupAdmin} className="setup-admin-button">
+                  {t("Setup Default Admin")}
                 </button>
-                <p className="setup-note">
-                  Use this to create the first admin user if no users exist in
-                  the system.
-                </p>
+                <p className="setup-note">{t("setup_note")}</p>
               </div>
             )}
           </div>

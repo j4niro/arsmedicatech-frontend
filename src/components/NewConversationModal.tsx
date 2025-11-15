@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "react-i18next";
 import apiService from '../services/api';
 import { createErrorModalState } from './ErrorModal';
 import './NewConversationModal.css';
@@ -21,18 +22,13 @@ const NewConversationModal = ({
   onStartUserChat,
   onShowError,
 }: NewConversationModalProps): JSX.Element | null => {
-  const [selectedOption, setSelectedOption] = useState<
-    'chatbot' | 'user' | null
-  >(null);
+
+  const { t } = useTranslation();
+
+  const [selectedOption, setSelectedOption] = useState<'chatbot' | 'user' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<
-    Array<{
-      id: string;
-      name: string;
-      avatar: string;
-      display_name: string;
-      role: string;
-    }>
+    Array<{ id: string; name: string; avatar: string; display_name: string; role: string }>
   >([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -40,9 +36,7 @@ const NewConversationModal = ({
 
   const handleOptionSelect = (option: 'chatbot' | 'user') => {
     setSelectedOption(option);
-    if (option === 'chatbot') {
-      setSearchResults([]);
-    }
+    if (option === 'chatbot') setSearchResults([]);
   };
 
   const handleSearch = async (query: string) => {
@@ -77,12 +71,8 @@ const NewConversationModal = ({
   const checkOpenAIAPIKey = async (): Promise<boolean> => {
     try {
       const response = await apiService.getAPI('/settings');
-      if (response.success && response.settings) {
-        return response.settings.has_openai_api_key === true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error checking OpenAI API key:', error);
+      return response.success && response.settings?.has_openai_api_key === true;
+    } catch {
       return false;
     }
   };
@@ -90,31 +80,23 @@ const NewConversationModal = ({
   const handleStartConversation = async () => {
     if (selectedOption === 'chatbot') {
       const hasAPIKey = await checkOpenAIAPIKey();
-
       if (!hasAPIKey) {
         onShowError(
           createErrorModalState(
-            'OpenAI API Key Required',
-            'To use the AI Assistant, you need to configure your OpenAI API key in Settings. This key is required for AI-powered features and is stored securely.',
+            t("openaiKeyRequiredTitle"),
+            t("openaiKeyRequiredMessage"),
             'settings'
           )
         );
         onClose();
         return;
       }
-
       onStartChatbot();
       onClose();
     }
   };
 
-  const handleUserSelect = (user: {
-    id: string;
-    name: string;
-    avatar: string;
-    display_name: string;
-    role: string;
-  }) => {
+  const handleUserSelect = (user: { id: string; display_name: string; avatar: string; role: string }) => {
     onStartUserChat(user.id, {
       display_name: user.display_name,
       avatar: user.avatar,
@@ -131,22 +113,14 @@ const NewConversationModal = ({
 
   return (
     <div className="new-conversation-modal-overlay" onClick={handleClose}>
-      <div
-        className="new-conversation-modal"
-        onClick={e => e.stopPropagation()}
-      >
-        <button className="modal-close-button" onClick={handleClose}>
-          ×
-        </button>
+      <div className="new-conversation-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close-button" onClick={handleClose}>×</button>
 
         <div className="modal-content">
           <div className="modal-icon">💬</div>
 
-          <h2>Start New Conversation</h2>
-
-          <p className="modal-description">
-            Choose how you'd like to start a new conversation
-          </p>
+          <h2>{t("startNewConversation")}</h2>
+          <p className="modal-description">{t("chooseConversationMethod")}</p>
 
           <div className="conversation-options">
             <div
@@ -155,11 +129,8 @@ const NewConversationModal = ({
             >
               <div className="option-icon">🤖</div>
               <div className="option-content">
-                <h3>AI Assistant</h3>
-                <p>
-                  Chat with our intelligent AI assistant for medical guidance
-                  and support
-                </p>
+                <h3>{t("aiAssistant")}</h3>
+                <p>{t("aiAssistantDesc")}</p>
               </div>
             </div>
 
@@ -169,11 +140,8 @@ const NewConversationModal = ({
             >
               <div className="option-icon">👥</div>
               <div className="option-content">
-                <h3>Find User</h3>
-                <p>
-                  Search for and start a conversation with another healthcare
-                  professional
-                </p>
+                <h3>{t("findUser")}</h3>
+                <p>{t("findUserDesc")}</p>
               </div>
             </div>
           </div>
@@ -183,29 +151,19 @@ const NewConversationModal = ({
               <div className="search-container">
                 <input
                   type="text"
-                  placeholder="Search for users..."
+                  placeholder={t("searchUsersPlaceholder")}
                   value={searchQuery}
                   onChange={e => handleSearch(e.target.value)}
                   className="user-search-input"
                 />
-                {isSearching && (
-                  <div className="search-loading">Searching...</div>
-                )}
+                {isSearching && <div className="search-loading">{t("searching")}</div>}
               </div>
 
               {searchResults.length > 0 && (
                 <div className="search-results">
                   {searchResults.map(user => (
-                    <div
-                      key={user.id}
-                      className="user-result"
-                      onClick={() => handleUserSelect(user)}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="user-avatar"
-                      />
+                    <div key={user.id} className="user-result" onClick={() => handleUserSelect(user)}>
+                      <img src={user.avatar} alt={user.name} className="user-avatar" />
                       <div className="user-info">
                         <span className="user-name">{user.display_name}</span>
                         <span className="user-role">{user.role}</span>
@@ -215,23 +173,18 @@ const NewConversationModal = ({
                 </div>
               )}
 
-              {searchQuery.length > 2 &&
-                searchResults.length === 0 &&
-                !isSearching && (
-                  <div className="no-results">
-                    No users found matching "{searchQuery}"
-                  </div>
-                )}
+              {searchQuery.length > 2 && searchResults.length === 0 && !isSearching && (
+                <div className="no-results">
+                  {t("noUsersFound", { query: searchQuery })}
+                </div>
+              )}
             </div>
           )}
 
           {selectedOption === 'chatbot' && (
             <div className="modal-actions">
-              <button
-                className="start-chatbot-button"
-                onClick={handleStartConversation}
-              >
-                Start AI Assistant Chat
+              <button className="start-chatbot-button" onClick={handleStartConversation}>
+                {t("startAIAssistantChat")}
               </button>
             </div>
           )}

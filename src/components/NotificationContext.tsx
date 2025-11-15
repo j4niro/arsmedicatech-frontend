@@ -13,19 +13,14 @@ interface NotificationContextType {
   getRecentNotifications: (limit?: number) => Notification[];
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
-);
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 interface NotificationProviderProps {
   children: ReactNode;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({
-  children,
-}) => {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const notificationState = useNotifications();
-
   return (
     <NotificationContext.Provider value={notificationState}>
       {children}
@@ -35,10 +30,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
 export const useNotificationContext = () => {
   const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error(
-      'useNotificationContext must be used within a NotificationProvider'
-    );
+  if (!context) {
+    throw new Error('useNotificationContext must be used within a NotificationProvider');
   }
   return context;
 };

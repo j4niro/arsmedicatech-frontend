@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { EncounterForm } from '../components/EncounterForm';
 import { encounterAPI, patientAPI } from '../services/api';
 import { EncounterType, PatientType } from '../types';
+import { useTranslation } from "react-i18next";
 
 export function EncounterFormPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { encounterId, patientId } = useParams<{
     encounterId?: string;
@@ -19,25 +21,21 @@ export function EncounterFormPage() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // If editing an existing encounter, load it
         if (encounterId) {
           const encounterData = await encounterAPI.getById(encounterId);
           setEncounter(encounterData);
 
-          // If encounter has patient data, use it
           if (encounterData.patient) {
             setPatient(encounterData.patient);
           }
         }
 
-        // If creating a new encounter and patientId is provided, load patient
         if (!encounterId && patientId) {
           const patientData = await patientAPI.getById(patientId);
           setPatient(patientData);
         }
       } catch (error) {
         console.error('Error initializing encounter form:', error);
-        // Handle error - could show a toast notification here
       } finally {
         setIsInitializing(false);
       }
@@ -50,18 +48,15 @@ export function EncounterFormPage() {
     setIsLoading(true);
     try {
       if (encounterId) {
-        // Update existing encounter
         await encounterAPI.update(encounterId, encounterData);
       } else {
-        // Create new encounter
         const targetPatientId = patientId || patient?.demographic_no;
         if (!targetPatientId) {
-          throw new Error('Patient ID is required to create an encounter');
+          throw new Error(t("patient_id_required"));
         }
         await encounterAPI.create(targetPatientId, encounterData);
       }
 
-      // Navigate back to the appropriate page
       if (patient?.demographic_no) {
         navigate(`/patients/${patient.demographic_no}`);
       } else {
@@ -69,14 +64,12 @@ export function EncounterFormPage() {
       }
     } catch (error) {
       console.error('Error saving encounter:', error);
-      // Handle error - could show a toast notification here
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // Navigate back to the appropriate page
     if (patient?.demographic_no) {
       navigate(`/patients/${patient.demographic_no}`);
     } else {
@@ -90,7 +83,7 @@ export function EncounterFormPage() {
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading encounter form...</p>
+            <p className="text-gray-600">{t("loading_encounter_form")}</p>
           </div>
         </div>
       </div>
@@ -104,12 +97,11 @@ export function EncounterFormPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {encounter ? 'Edit Encounter' : 'New Encounter'}
+              {encounter ? t("edit_encounter") : t("new_encounter")}
             </h1>
             {patient && (
               <p className="text-gray-600 mt-2">
-                Patient: {patient.first_name} {patient.last_name} (ID:{' '}
-                {patient.demographic_no})
+                {t("Patient")}: {patient.first_name} {patient.last_name} (ID: {patient.demographic_no})
               </p>
             )}
           </div>
@@ -117,7 +109,7 @@ export function EncounterFormPage() {
             onClick={handleCancel}
             className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
           >
-            ← Back
+            ← {t("Back")}
           </button>
         </div>
       </div>

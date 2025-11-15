@@ -15,6 +15,7 @@ import apiService from '../services/api';
 import authService from '../services/auth';
 import logger from '../services/logging';
 import './Messages.css';
+import { useTranslation } from 'react-i18next';
 
 function truncateLastMsg(lastMessage: string, maxLength = 30): string {
   if (lastMessage.length <= maxLength) return lastMessage;
@@ -22,6 +23,7 @@ function truncateLastMsg(lastMessage: string, maxLength = 30): string {
 }
 
 const Messages = () => {
+  const { t } = useTranslation();
   logger.debug('Messages component rendering');
 
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -32,7 +34,6 @@ const Messages = () => {
     usedTools: [] as string[],
   });
 
-  // Error modal state
   const [errorModal, setErrorModal] = useState({
     isOpen: false,
     error: '',
@@ -40,7 +41,6 @@ const Messages = () => {
     suggested_action: '' as string | undefined,
   });
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = () => {
       const authStatus = authService.isAuthenticated();
@@ -62,15 +62,16 @@ const Messages = () => {
   const handleCloseErrorModal = () => {
     setErrorModal(prev => ({ ...prev, isOpen: false }));
   };
+
   const { isPopupOpen, showSignupPopup, hideSignupPopup } = useSignupPopup();
   const { isModalOpen, showModal, hideModal } = useNewConversationModal();
+
   const [selectedMessages, setSelectedMessages] = useState<
     { sender: string; text: string; usedTools?: string[] }[]
   >([]);
 
   logger.debug('Messages: isAuthenticated:', isAuthenticated);
 
-  // Initialize notification system
   const {
     notifications,
     unreadCount,
@@ -94,56 +95,43 @@ const Messages = () => {
     clearConversations,
     addTestConversation,
     isLoading,
-  } = useChat(false); // Default to regular chat, will be overridden per conversation
+  } = useChat(false);
 
-  // Memoize selectedConversation to prevent unnecessary re-renders
   const selectedConversation = useMemo(() => {
     return conversations.find(conv => conv.id === selectedConversationId);
   }, [conversations, selectedConversationId]);
 
-  // Handle real-time notifications
   const handleNewMessage = useCallback(
     (data: any) => {
       logger.debug('Received new message notification:', data);
 
-      // Add notification for new message
-      const notification = {
-        type: 'new_message' as const,
-        title: 'New Message',
+      addNotification({
+        type: 'new_message',
+        title: t('new_message'),
         message: data.text,
         timestamp: data.timestamp,
         data: {
           sender: data.sender,
           conversation_id: data.conversation_id,
         },
-      };
+      });
 
-      logger.debug('Adding notification:', notification);
-      addNotification(notification);
-      logger.debug('Notification added successfully');
-
-      // Update conversation list with new message
-      setConversations(prevConversations =>
-        prevConversations.map(conv => {
-          if (conv.id.toString() === data.conversation_id) {
-            return {
-              ...conv,
-              lastMessage: data.text,
-            };
-          }
-          return conv;
-        })
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id.toString() === data.conversation_id
+            ? { ...conv, lastMessage: data.text }
+            : conv
+        )
       );
 
-      // If this conversation is currently selected, refresh messages
       if (selectedConversationId?.toString() === data.conversation_id) {
-        // Only refresh messages for real conversations (string IDs)
         if (typeof selectedConversationId === 'string') {
           const fetchMessages = async () => {
             try {
               const response = await apiService.getConversationMessages(
                 selectedConversationId.toString()
               );
+
               const fetchedMessages = (response.messages || []).map(
                 (msg: any) => ({
                   sender: msg.sender,
@@ -151,40 +139,32 @@ const Messages = () => {
                 })
               );
 
-              // Update both selectedMessages and conversations state
               setSelectedMessages(fetchedMessages);
 
-              // Update the conversation in the conversations state with the fetched messages
-              setConversations(prevConversations =>
-                prevConversations.map(conv => {
-                  if (conv.id === selectedConversationId) {
-                    return {
-                      ...conv,
-                      messages: fetchedMessages,
-                    };
-                  }
-                  return conv;
-                })
+              setConversations(prev =>
+                prev.map(conv =>
+                  conv.id === selectedConversationId
+                    ? { ...conv, messages: fetchedMessages }
+                    : conv
+                )
               );
             } catch (error) {
               console.error('Error refreshing messages:', error);
             }
           };
+
           fetchMessages();
         }
       }
     },
-    [selectedConversationId, setConversations, addNotification]
+    [selectedConversationId, setConversations, addNotification, t]
   );
 
   const handleAppointmentReminder = useCallback(
     (data: any) => {
-      logger.debug('Received appointment reminder:', data);
-
-      // Add notification for appointment reminder
       addNotification({
         type: 'appointment_reminder',
-        title: 'Appointment Reminder',
+        title: t('appointment_reminder'),
         message: data.content,
         timestamp: data.timestamp,
         data: {
@@ -193,49 +173,39 @@ const Messages = () => {
         },
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleSystemNotification = useCallback(
     (data: any) => {
-      logger.debug('Received system notification:', data);
-
-      // Add notification for system notification
       addNotification({
         type: 'system_notification',
-        title: 'System Notification',
+        title: t('system_notification'),
         message: data.content,
         timestamp: data.timestamp,
-        data: data,
+        data,
       });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
-  // Initialize SSE connection
-  logger.debug('Messages: Setting up SSE connection with callbacks');
   useEvents({
     onNewMessage: handleNewMessage,
     onAppointmentReminder: handleAppointmentReminder,
     onSystemNotification: handleSystemNotification,
   });
-  logger.debug('Messages: SSE connection setup complete');
-
-  // Fetch messages when a conversation is selected
   useEffect(() => {
     let isMounted = true;
 
     const fetchMessages = async () => {
       if (!selectedConversationId || !selectedConversation) return;
 
-      // Check if this is a dummy conversation (has numeric ID and messages already loaded)
       const isDummyConversation =
         typeof selectedConversationId === 'number' &&
         selectedConversation.messages &&
         selectedConversation.messages.length > 0;
 
       if (isDummyConversation) {
-        // For dummy conversations, use the pre-loaded messages
         if (isMounted) {
           setSelectedMessages(selectedConversation.messages);
         }
@@ -243,54 +213,42 @@ const Messages = () => {
       }
 
       if (selectedConversation.isAI) {
-        // For AI assistant, fetch from LLM chat history endpoint
         try {
           const assistantId =
             selectedConversation.participantId || 'ai-assistant';
+
           const response = await apiService.getLLMChatHistory(assistantId);
           const fetchedMessages = response.messages || [];
 
           if (isMounted) {
-            // Process messages to include tool usage information
-            const processedMessages = fetchedMessages.map((msg: any) => ({
+            const processed = fetchedMessages.map((msg: any) => ({
               sender: msg.sender,
               text: msg.text,
               usedTools: msg.usedTools || [],
             }));
 
-            // Update both selectedMessages and conversations state
-            setSelectedMessages(processedMessages);
+            setSelectedMessages(processed);
 
-            // Update the conversation in the conversations state with the fetched messages
-            setConversations(prevConversations =>
-              prevConversations.map(conv => {
-                if (conv.id === selectedConversationId) {
-                  return {
-                    ...conv,
-                    messages: processedMessages,
-                  };
-                }
-                return conv;
-              })
+            setConversations(prev =>
+              prev.map(conv =>
+                conv.id === selectedConversationId
+                  ? { ...conv, messages: processed }
+                  : conv
+              )
             );
           }
         } catch (error) {
           console.error('Error fetching LLM messages:', error);
-          if (isMounted) {
-            setSelectedMessages([]);
-          }
+          if (isMounted) setSelectedMessages([]);
         }
         return;
       }
 
-      // Only fetch from database for real conversations (string IDs)
       if (typeof selectedConversationId === 'string') {
-        // Check if this conversation has messages already loaded (like test conversations)
         if (
           selectedConversation.messages &&
           selectedConversation.messages.length > 0
         ) {
-          // Use the messages that are already in the conversation object
           if (isMounted) {
             setSelectedMessages(selectedConversation.messages);
           }
@@ -301,37 +259,30 @@ const Messages = () => {
           const response = await apiService.getConversationMessages(
             selectedConversationId.toString()
           );
-          // The backend returns { messages: [...] }
-          const fetchedMessages = (response.messages || []).map((msg: any) => ({
-            sender: msg.sender,
-            text: msg.text,
-          }));
+
+          const fetchedMessages = (response.messages || []).map(
+            (msg: any) => ({
+              sender: msg.sender,
+              text: msg.text,
+            })
+          );
 
           if (isMounted) {
-            // Update both selectedMessages and conversations state
             setSelectedMessages(fetchedMessages);
 
-            // Update the conversation in the conversations state with the fetched messages
-            setConversations(prevConversations =>
-              prevConversations.map(conv => {
-                if (conv.id === selectedConversationId) {
-                  return {
-                    ...conv,
-                    messages: fetchedMessages,
-                  };
-                }
-                return conv;
-              })
+            setConversations(prev =>
+              prev.map(conv =>
+                conv.id === selectedConversationId
+                  ? { ...conv, messages: fetchedMessages }
+                  : conv
+              )
             );
           }
         } catch (error) {
           console.error('Error fetching messages:', error);
-          if (isMounted) {
-            setSelectedMessages([]);
-          }
+          if (isMounted) setSelectedMessages([]);
         }
       } else {
-        // For other cases, set empty messages
         if (isMounted) {
           setSelectedMessages([]);
         }
@@ -340,11 +291,10 @@ const Messages = () => {
 
     fetchMessages();
 
-    // Cleanup function to prevent memory leaks
     return () => {
       isMounted = false;
     };
-  }, [selectedConversationId]); // Only depend on selectedConversationId to prevent circular dependencies
+  }, [selectedConversationId]);
 
   const handleSendMessage = async () => {
     if (!isAuthenticated) {
@@ -357,67 +307,43 @@ const Messages = () => {
     setIsSendingMessage(true);
 
     try {
-      // Check if this is an AI conversation or user-to-user conversation
       if (selectedConversation?.isAI) {
-        // Use LLM chat for AI conversations
         const assistantId =
           selectedConversation.participantId || 'ai-assistant';
 
-        logger.debug('Sending LLM message:', {
-          assistantId,
-          prompt: newMessage,
-        });
-
-        // Send message to LLM endpoint
         const sendResponse = await apiService.sendLLMMessage(
           assistantId,
           newMessage
         );
-        logger.debug('LLM send response:', sendResponse);
 
-        // Fetch updated LLM chat history for this assistant
         const response = await apiService.getLLMChatHistory(assistantId);
         const fetchedMessages = response.messages || [];
-        logger.debug('Fetched LLM messages:', fetchedMessages);
 
-        // Process messages to include tool usage information
         const processedMessages = fetchedMessages.map((msg: any) => ({
           sender: msg.sender,
           text: msg.text,
           usedTools: msg.usedTools || [],
         }));
 
-        // Update both selectedMessages and conversations state
         setSelectedMessages(processedMessages);
 
-        // Update the conversation in the conversations state with the fetched messages
-        setConversations(prevConversations =>
-          prevConversations.map(conv => {
-            if (conv.id === selectedConversationId) {
-              return {
-                ...conv,
-                messages: processedMessages,
-              };
-            }
-            return conv;
-          })
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === selectedConversationId
+              ? { ...conv, messages: processedMessages }
+              : conv
+          )
         );
       } else {
-        // Use regular chat for user-to-user conversations
         await handleSendUserMessage();
       }
 
-      // Clear the input after successful send
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
 
-      // Show user-friendly error message
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to send message';
-      alert(`Error: ${errorMessage}`);
+      alert(t('error_sending_message'));
 
-      // Don't clear the message input so user can try again
     } finally {
       setIsSendingMessage(false);
     }
@@ -428,57 +354,35 @@ const Messages = () => {
 
     const messageText = newMessage;
 
-    logger.debug(
-      '[DEBUG] Sending user message to conversation:',
-      selectedConversation.id
-    );
-    logger.debug('Selected conversation:', selectedConversation);
-
-    // Add message locally first for immediate feedback
     const updatedConversations = conversations.map(conv => {
       if (conv.id === selectedConversationId) {
         return {
           ...conv,
-          messages: [...conv.messages, { sender: 'Me', text: messageText }],
+          messages: [...conv.messages, { sender: t('me'), text: messageText }],
           lastMessage: messageText,
         };
       }
       return conv;
     });
 
-    // Update conversations state immediately for UI feedback
-    // We need to update the conversations state since useChat doesn't handle user-to-user messages
     setConversations(updatedConversations);
 
-    // Only send message to backend for real conversations (string IDs)
     if (typeof selectedConversation.id === 'string') {
       try {
         await apiService.sendMessage(
           selectedConversation.id.toString(),
           messageText
         );
-        logger.debug(
-          'Message sent successfully to conversation:',
-          selectedConversation.id
-        );
       } catch (error) {
         console.error('Error sending message:', error);
-        // In a real app, you might want to show an error message to the user
-        // and potentially revert the local state change
       }
-    } else {
-      logger.debug(
-        'Message added locally for dummy conversation:',
-        selectedConversation.id
-      );
     }
   };
 
   const handleStartChatbot = () => {
-    // Create AI Assistant conversation with unique ID
     createNewConversation(
       `ai-assistant-${Date.now()}`,
-      'AI Assistant',
+      t('ai_assistant'),
       'https://ui-avatars.com/api/?name=AI&background=random',
       true
     );
@@ -488,39 +392,27 @@ const Messages = () => {
     userId: string,
     userInfo?: { display_name: string; avatar: string }
   ) => {
-    logger.debug('Starting user chat with:', { userId, userInfo });
     try {
-      // Create conversation in database
-      logger.debug('Creating conversation in database...');
       const response = await apiService.createConversation(
         [userId],
         'user_to_user'
       );
-      logger.debug('Conversation creation response:', response);
 
       if (response.conversation_id) {
-        logger.debug(
-          '[DEBUG] Creating conversation in frontend with ID:',
-          response.conversation_id
-        );
-        // Create conversation in frontend with the database ID
         createNewConversation(
           response.conversation_id,
-          userInfo?.display_name || 'Unknown User',
+          userInfo?.display_name || t('unknown_user'),
           userInfo?.avatar ||
             'https://ui-avatars.com/api/?name=User&background=random',
           false
         );
-      } else {
-        console.error('Failed to create conversation:', response);
       }
     } catch (error) {
       console.error('Error creating conversation:', error);
-      // Fallback: create conversation locally
-      logger.debug('Falling back to local conversation creation');
+
       createNewConversation(
         userId,
-        userInfo?.display_name || 'Unknown User',
+        userInfo?.display_name || t('unknown_user'),
         userInfo?.avatar ||
           'https://ui-avatars.com/api/?name=User&background=random',
         false
@@ -535,55 +427,55 @@ const Messages = () => {
     }
     showModal();
   };
-
   return (
     <>
       {isAuthChecking ? (
         <div className="auth-required-container">
           <div className="auth-required-content">
             <div className="auth-required-icon">⏳</div>
-            <h2>Loading...</h2>
-            <p>Checking authentication status...</p>
+            <h2>{t('loading')}</h2>
+            <p>{t('checking_auth')}</p>
           </div>
         </div>
       ) : !isAuthenticated ? (
         <div className="auth-required-container">
           <div className="auth-required-content">
             <div className="auth-required-icon">🔐</div>
-            <h2>Sign In Required</h2>
-            <p>
-              You need to be signed in to access messages and start
-              conversations.
-            </p>
+            <h2>{t('sign_in_required')}</h2>
+            <p>{t('must_sign_in')}</p>
             <button className="auth-required-button" onClick={showSignupPopup}>
-              Sign In / Sign Up
+              {t('sign_in_or_sign_up')}
             </button>
           </div>
         </div>
       ) : (
         <div className="messages-container">
-          {/* Left sidebar: conversation list */}
+          {/* Left sidebar */}
           <div className="conversations-list">
             <div className="conversation-list-header">
-              <h3 className="conversation-list-title">Conversations</h3>
+              <h3 className="conversation-list-title">
+                {t('conversations')}
+              </h3>
               <div className="conversation-header-buttons">
                 <button
                   className="new-conversation-button"
                   onClick={handleNewConversation}
-                  title="Start new conversation"
+                  title={t('start_new_conversation')}
                 >
                   <span className="button-icon">+</span>
                 </button>
+
                 {DEBUG && (
                   <>
                     <button
                       className="debug-button"
                       onClick={clearConversations}
                       style={{ marginLeft: '10px', fontSize: '12px' }}
-                      title="Clear all conversations (debug)"
+                      title={t('clear_conversations')}
                     >
-                      Clear
+                      {t('clear')}
                     </button>
+
                     <button
                       className="debug-button"
                       onClick={addTestConversation}
@@ -593,14 +485,15 @@ const Messages = () => {
                         backgroundColor: '#28a745',
                         borderColor: '#28a745',
                       }}
-                      title="Add test conversation (debug)"
+                      title={t('add_test_conversation')}
                     >
-                      Test
+                      {t('test')}
                     </button>
                   </>
                 )}
               </div>
             </div>
+
             <ul>
               {conversations.length > 0 ? (
                 conversations.map(conv => (
@@ -613,7 +506,11 @@ const Messages = () => {
                         : 'conversation'
                     }
                   >
-                    <img className="avatar" src={conv.avatar} alt={conv.name} />
+                    <img
+                      className="avatar"
+                      src={conv.avatar}
+                      alt={conv.name}
+                    />
                     <div className="conversation-info">
                       <p className="conversation-name">{conv.name}</p>
                       <p className="conversation-last">
@@ -624,31 +521,33 @@ const Messages = () => {
                 ))
               ) : (
                 <li className="no-conversations">
-                  <p>
-                    No conversations yet. Start a new conversation to begin
-                    messaging!
-                  </p>
+                  <p>{t('no_conversations')}</p>
                 </li>
               )}
             </ul>
           </div>
 
-          {/* Right side: chat window */}
+          {/* Chat window */}
           <div className="chat-window">
             {selectedConversation ? (
               <>
                 <div className="chat-header">
                   <h3>{selectedConversation.name}</h3>
                 </div>
+
                 <div className="messages-list">
                   {selectedMessages.map((msg, index) => (
                     <div
                       key={index}
-                      className={msg.sender === 'Me' ? 'message me' : 'message'}
+                      className={msg.sender === t('me')
+                        ? 'message me'
+                        : 'message'
+                      }
                     >
                       <div className="message-sender">
                         {msg.sender}
-                        {msg.sender === 'AI Assistant' &&
+
+                        {msg.sender === t('ai_assistant') &&
                           msg.usedTools &&
                           msg.usedTools.length > 0 && (
                             <button
@@ -659,36 +558,45 @@ const Messages = () => {
                                   usedTools: msg.usedTools || [],
                                 })
                               }
-                              title="View tools used"
+                              title={t('view_tools_used')}
                             >
                               🔧
                             </button>
                           )}
                       </div>
+
                       <div className="message-text">
                         <ReactMarkdown>{msg.text}</ReactMarkdown>
                       </div>
                     </div>
                   ))}
+
                   {isLoading && (
                     <div className="message">
-                      <div className="message-sender">AI Assistant</div>
+                      <div className="message-sender">
+                        {t('ai_assistant')}
+                      </div>
                       <div className="message-text">
-                        <div className="loading-indicator">Thinking...</div>
+                        <div className="loading-indicator">
+                          {t('thinking')}
+                        </div>
                       </div>
                     </div>
                   )}
+
                   {isSendingMessage && (
                     <div className="message-sending-indicator">
                       <div className="loading-spinner"></div>
-                      <span>Sending message...</span>
+                      <span>{t('sending')}</span>
                     </div>
                   )}
                 </div>
+
+                {/* Input field */}
                 <div className="message-input-container">
                   <input
                     type="text"
-                    placeholder="Type a message..."
+                    placeholder={t('type_message')}
                     value={newMessage}
                     onChange={e => setNewMessage(e.target.value)}
                     onKeyPress={e => {
@@ -698,27 +606,32 @@ const Messages = () => {
                     }}
                     disabled={isSendingMessage}
                   />
+
                   <button
                     onClick={handleSendMessage}
                     disabled={isSendingMessage || !newMessage.trim()}
                   >
-                    {isSendingMessage ? 'Sending...' : 'Send'}
+                    {isSendingMessage
+                      ? t('sending')
+                      : t('send')}
                   </button>
                 </div>
               </>
             ) : (
               <div className="no-conversation-selected">
-                <p>Select a conversation to start messaging</p>
+                <p>{t('select_conversation')}</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* SSE Notification Test Component */}
+      {/* Debug SSE */}
       {DEBUG && <NotificationTest />}
-
+      {/* Signup popup */}
       <SignupPopup isOpen={isPopupOpen} onClose={hideSignupPopup} />
+
+      {/* New conversation modal */}
       <NewConversationModal
         isOpen={isModalOpen}
         onClose={hideModal}
@@ -726,6 +639,8 @@ const Messages = () => {
         onStartUserChat={handleStartUserChat}
         onShowError={handleShowError}
       />
+
+      {/* Error modal */}
       <ErrorModal
         isOpen={errorModal.isOpen}
         error={errorModal.error}
@@ -733,10 +648,14 @@ const Messages = () => {
         suggested_action={errorModal.suggested_action}
         onClose={handleCloseErrorModal}
       />
+
+      {/* Modal showing tools used by the AI */}
       <ToolUsageModal
         isOpen={toolUsageModal.isOpen}
         usedTools={toolUsageModal.usedTools}
-        onClose={() => setToolUsageModal({ isOpen: false, usedTools: [] })}
+        onClose={() =>
+          setToolUsageModal({ isOpen: false, usedTools: [] })
+        }
       />
     </>
   );

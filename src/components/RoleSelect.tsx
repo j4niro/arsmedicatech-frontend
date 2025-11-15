@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from "react-i18next";
 
 interface RoleSelectProps {
   value: string;
@@ -7,32 +8,23 @@ interface RoleSelectProps {
   style?: React.CSSProperties;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  patient: 'Individual',
-  provider: 'Healthcare provider',
-  administrator: 'Administrator for a clinic',
-};
-
-const ROLE_DESCRIPTIONS: Record<string, string> = {
-  patient: 'Looking to manage or better understand their own health.',
-  provider: 'Not affiliated with an existing clinic in our system.',
-  administrator: 'You want to manage a clinic.',
-};
-
 const RoleSelect: React.FC<RoleSelectProps> = ({
   value,
   onChange,
   disabled = false,
   style,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="form-group" style={{ marginBottom: 24, ...style }}>
       <label
         htmlFor="role"
         style={{ fontWeight: 500, marginBottom: 4, display: 'block' }}
       >
-        You are a...
+        {t("You are a...")}
       </label>
+
       <select
         id="role"
         name="role"
@@ -47,13 +39,11 @@ const RoleSelect: React.FC<RoleSelectProps> = ({
           fontSize: 16,
         }}
       >
-        {Object.entries(ROLE_LABELS).map(([role, label]) => (
-          <option key={role} value={role}>
-            {label}
-          </option>
-        ))}
+        <option value="patient">{t("Individual")}</option>
+        <option value="provider">{t("Healthcare provider")}</option>
+        <option value="administrator">{t("Administrator for a clinic")}</option>
       </select>
-      {/* Contextual description for the selected role */}
+
       <div
         className="role-description"
         style={{
@@ -64,8 +54,11 @@ const RoleSelect: React.FC<RoleSelectProps> = ({
           textAlign: 'left',
         }}
       >
-        {ROLE_DESCRIPTIONS[value]}
+        {value === "patient" && t("Looking to manage or better understand their own health.")}
+        {value === "provider" && t("Not affiliated with an existing clinic in our system.")}
+        {value === "administrator" && t("You want to manage a clinic.")}
       </div>
+
       <div style={{ marginTop: 8 }}>
         <a
           href="/about/roles"
@@ -78,7 +71,7 @@ const RoleSelect: React.FC<RoleSelectProps> = ({
           target="_blank"
           rel="noopener noreferrer"
         >
-          If you are unsure, read more here.
+          {t("If you are unsure, read more here.")}
         </a>
       </div>
     </div>

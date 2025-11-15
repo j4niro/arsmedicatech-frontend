@@ -3,6 +3,7 @@ import authService from '../services/auth';
 import './LoginForm.css';
 import RoleSelect from './RoleSelect';
 import { useUser } from './UserContext';
+import { useTranslation } from "react-i18next";
 
 const RegisterForm = ({
   onRegister,
@@ -13,6 +14,8 @@ const RegisterForm = ({
   onSwitchToLogin: () => void;
   onClose?: () => void;
 }): JSX.Element => {
+  const { t } = useTranslation();
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,8 +23,9 @@ const RegisterForm = ({
     confirmPassword: '',
     first_name: '',
     last_name: '',
-    role: 'patient', // default to patient
+    role: 'patient',
   });
+
   type RegisterFormFields =
     | 'username'
     | 'email'
@@ -45,7 +49,6 @@ const RegisterForm = ({
       ...prev,
       [name]: value,
     }));
-    // Clear field-specific error when user starts typing
     if (errors[name as RegisterFormFields]) {
       setErrors(prev => ({
         ...prev,
@@ -56,81 +59,46 @@ const RegisterForm = ({
   };
 
   const validateUsername = (username: string): string => {
-    if (!username.trim()) {
-      return 'Username is required';
-    }
-    if (username.length < 3) {
-      return 'Username must be at least 3 characters long';
-    }
-    if (username.length > 30) {
-      return 'Username must be less than 30 characters';
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return 'Username can only contain letters, numbers, and underscores';
-    }
+    if (!username.trim()) return t("Username is required");
+    if (username.length < 3) return t("Username must be at least 3 characters long");
+    if (username.length > 30) return t("Username must be less than 30 characters");
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) return t("Username can only contain letters, numbers, and underscores");
     return '';
   };
 
   const validateEmail = (email: string): string => {
-    if (!email.trim()) {
-      return 'Email is required';
-    }
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailPattern.test(email)) {
-      return 'Invalid email format';
-    }
+    if (!email.trim()) return t("Email is required");
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) return t("Invalid email format");
     return '';
   };
 
   const validatePassword = (password: string): string => {
-    if (!password) {
-      return 'Password is required';
-    }
-    if (password.length < 8) {
-      return 'Password must be at least 8 characters long';
-    }
-    if (!/[A-Z]/.test(password)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!/[a-z]/.test(password)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!/\d/.test(password)) {
-      return 'Password must contain at least one number';
-    }
+    if (!password) return t("Password is required");
+    if (password.length < 8) return t("Password must be at least 8 characters long");
+    if (!/[A-Z]/.test(password)) return t("Password must contain at least one uppercase letter");
+    if (!/[a-z]/.test(password)) return t("Password must contain at least one lowercase letter");
+    if (!/\d/.test(password)) return t("Password must contain at least one number");
     return '';
   };
 
   const validateForm = () => {
     const newErrors: ErrorsType = {};
 
-    // Validate username
     const usernameError = validateUsername(formData.username);
-    if (usernameError) {
-      newErrors.username = usernameError;
-    }
+    if (usernameError) newErrors.username = usernameError;
 
-    // Validate email
     const emailError = validateEmail(formData.email);
-    if (emailError) {
-      newErrors.email = emailError;
-    }
+    if (emailError) newErrors.email = emailError;
 
-    // Validate password
     const passwordError = validatePassword(formData.password);
-    if (passwordError) {
-      newErrors.password = passwordError;
-    }
+    if (passwordError) newErrors.password = passwordError;
 
-    // Validate confirm password
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = t("Passwords do not match");
     }
 
-    // Validate role
-    if (!formData.role) {
-      newErrors.role = 'Please select an account type';
-    }
+    if (!formData.role) newErrors.role = t("Please select an account type");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -141,9 +109,7 @@ const RegisterForm = ({
   ): Promise<void> => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
     setGeneralError('');
@@ -159,16 +125,14 @@ const RegisterForm = ({
       );
 
       if (result.success) {
-        // The register response might return the user directly in data
-        // or nested under data.user - handle both cases
         const userData = result.data.user || result.data;
         onRegister(userData);
       } else {
-        setGeneralError(result.error || 'Registration failed');
+        setGeneralError(result.error || t("Registration failed"));
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setGeneralError('An unexpected error occurred');
+      setGeneralError(t("An unexpected error occurred"));
     } finally {
       setIsLoading(false);
     }
@@ -179,19 +143,17 @@ const RegisterForm = ({
       <div className="login-form">
         {onClose && (
           <button className="form-close-button" onClick={onClose}>
-            x
+            ×
           </button>
         )}
-        <h2>Create Account</h2>
-        <p className="login-subtitle">Sign up for a new account</p>
+        <h2>{t("Create Account")}</h2>
+        <p className="login-subtitle">{t("Sign up for a new account")}</p>
 
-        {generalError && (
-          <div className="error-message general-error">{generalError}</div>
-        )}
+        {generalError && <div className="error-message general-error">{generalError}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username *</label>
+            <label htmlFor="username">{t("Username")} *</label>
             <input
               type="text"
               id="username"
@@ -199,16 +161,14 @@ const RegisterForm = ({
               value={formData.username}
               onChange={handleChange}
               className={errors.username ? 'error' : ''}
-              placeholder="Choose a username"
+              placeholder={t("Choose a username")}
               disabled={isLoading}
             />
-            {errors.username && (
-              <span className="error-message">{errors.username}</span>
-            )}
+            {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
+            <label htmlFor="email">{t("Email")} *</label>
             <input
               type="email"
               id="email"
@@ -216,44 +176,42 @@ const RegisterForm = ({
               value={formData.email}
               onChange={handleChange}
               className={errors.email ? 'error' : ''}
-              placeholder="Enter your email"
+              placeholder={t("Enter your email")}
               disabled={isLoading}
             />
-            {errors.email && (
-              <span className="error-message">{errors.email}</span>
-            )}
+            {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="first_name">First Name</label>
+              <label htmlFor="first_name">{t("First Name")}</label>
               <input
                 type="text"
                 id="first_name"
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                placeholder="First name"
+                placeholder={t("First name")}
                 disabled={isLoading}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="last_name">Last Name</label>
+              <label htmlFor="last_name">{t("Last Name")}</label>
               <input
                 type="text"
                 id="last_name"
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                placeholder="Last name"
+                placeholder={t("Last name")}
                 disabled={isLoading}
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password *</label>
+            <label htmlFor="password">{t("Password")} *</label>
             <input
               type="password"
               id="password"
@@ -261,16 +219,14 @@ const RegisterForm = ({
               value={formData.password}
               onChange={handleChange}
               className={errors.password ? 'error' : ''}
-              placeholder="Create a password"
+              placeholder={t("Create a password")}
               disabled={isLoading}
             />
-            {errors.password && (
-              <span className="error-message">{errors.password}</span>
-            )}
+            {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password *</label>
+            <label htmlFor="confirmPassword">{t("Confirm Password")} *</label>
             <input
               type="password"
               id="confirmPassword"
@@ -278,7 +234,7 @@ const RegisterForm = ({
               value={formData.confirmPassword}
               onChange={handleChange}
               className={errors.confirmPassword ? 'error' : ''}
-              placeholder="Confirm your password"
+              placeholder={t("Confirm your password")}
               disabled={isLoading}
             />
             {errors.confirmPassword && (
@@ -286,26 +242,18 @@ const RegisterForm = ({
             )}
           </div>
 
-          <RoleSelect
-            value={formData.role}
-            onChange={e => handleChange(e)}
-            disabled={isLoading}
-          />
+          <RoleSelect value={formData.role} onChange={e => handleChange(e)} disabled={isLoading} />
 
           <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? t("Creating Account...") : t("Create Account")}
           </button>
         </form>
 
         <div className="login-footer">
           <p>
-            Already have an account?{' '}
-            <button
-              type="button"
-              className="link-button"
-              onClick={onSwitchToLogin}
-            >
-              Sign in
+            {t("Already have an account?")}{' '}
+            <button type="button" className="link-button" onClick={onSwitchToLogin}>
+              {t("Sign in")}
             </button>
           </p>
         </div>

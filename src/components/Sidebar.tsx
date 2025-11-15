@@ -4,7 +4,7 @@ import { usePluginWidgets } from "../hooks/usePluginWidgets";
 import logger from "../services/logging";
 import "./Sidebar.css";
 import { useUser } from "./UserContext";
-import { useTranslation } from "react-i18next"; // 🌍 i18n
+import { useTranslation } from "react-i18next";
 
 const Sidebar = () => {
   const { user, isLoading } = useUser();
@@ -33,7 +33,6 @@ const Sidebar = () => {
 
       <nav className={isCollapsed ? "collapsed" : ""}>
         <ul>
-          {/* 🏠 Dashboard */}
           <li>
             <NavLink
               to="/"
@@ -44,7 +43,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 🔧 Admin / Organization */}
           {(userType === "administrator" ||
             userType === "superadmin" ||
             userType === "admin") && (
@@ -71,11 +69,10 @@ const Sidebar = () => {
             </>
           )}
 
-          {/* 🩺 Patient-specific routes */}
           {userType === "patient" ? (
             <>
-              <li>
-                {user?.id && (
+              {user?.id && (
+                <li>
                   <NavLink
                     to={`/intake/${user.id}`}
                     className={({ isActive }) => (isActive ? "active" : "")}
@@ -83,8 +80,8 @@ const Sidebar = () => {
                   >
                     {isCollapsed ? "📝" : t("intakeForm")}
                   </NavLink>
-                )}
-              </li>
+                </li>
+              )}
               <li>
                 <NavLink
                   to="/health-metrics"
@@ -118,7 +115,6 @@ const Sidebar = () => {
             </>
           )}
 
-          {/* 🔬 Lab Results */}
           <li>
             <NavLink
               to="/lab-results"
@@ -129,7 +125,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 💬 Messages */}
           <li>
             <NavLink
               to="/messages"
@@ -140,7 +135,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 📅 Schedule */}
           <li>
             <NavLink
               to="/schedule"
@@ -151,7 +145,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* ⚙️ Settings */}
           <li>
             <NavLink
               to="/settings"
@@ -162,7 +155,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 📁 Uploads */}
           <li>
             <NavLink
               to="/uploads"
@@ -173,7 +165,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 🔧 Plugin Widgets */}
           {widgets.map((widget) => (
             <li key={widget.name}>
               <NavLink
@@ -186,7 +177,6 @@ const Sidebar = () => {
             </li>
           ))}
 
-          {/* 📝 Notes */}
           <li>
             <NavLink
               to="/notes"
@@ -203,13 +193,9 @@ const Sidebar = () => {
         <div className="sidebar-footer">
           <div className="corner-user-avatar"></div>
           <div className="corner-user-info">
-            <h4>
-              {t("hello")}, {user?.username}
-            </h4>
+            <h4>{t("hello")}, {user?.username}</h4>
             <p>
-              {t("remainingAppointments", {
-                count: user?.appointments || 0,
-              })}
+              {t("remainingAppointments", { count: user?.appointments || 0 })}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from "react-i18next";
 
 export default function SearchDropdown({
   show,
@@ -14,16 +15,14 @@ export default function SearchDropdown({
     highlighted_note: string;
   }>;
 }): JSX.Element | null {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  //const ref = useRef<HTMLDivElement | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setOpen(show), [show]);
 
   useEffect(() => {
-    // e: MouseEvent
     function handleOutside(e: MouseEvent): void {
-      // e.target as Node
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
@@ -37,7 +36,7 @@ export default function SearchDropdown({
   return (
     <div ref={ref} className="search-results-dropdown">
       {loading ? (
-        <div className="loading-message">Searching…</div>
+        <div className="loading-message">{t("Searching…")}</div>
       ) : results.length ? (
         results.map(r => (
           <div key={r.id} className="search-result-item">
@@ -51,7 +50,7 @@ export default function SearchDropdown({
           </div>
         ))
       ) : (
-        <div className="no-results-message">No matches</div>
+        <div className="no-results-message">{t("No matches")}</div>
       )}
     </div>
   );

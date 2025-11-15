@@ -6,6 +6,7 @@ import {
   UserIcon,
 } from '@heroicons/react/24/outline';
 import React from 'react';
+import { useTranslation } from "react-i18next";
 
 interface UserProfile {
   id: string;
@@ -27,16 +28,18 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
+  const { t } = useTranslation();
+
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'Administrator';
+        return t("Administrator");
       case 'provider':
-        return 'Healthcare Provider';
+        return t("Healthcare Provider");
       case 'patient':
-        return 'Patient';
+        return t("Patient");
       default:
-        return role.charAt(0).toUpperCase() + role.slice(1);
+        return t(role.charAt(0).toUpperCase() + role.slice(1));
     }
   };
 
@@ -56,28 +59,28 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   return (
     <div className="profile-container">
       <div className="profile-header">
-        <h1>Profile Information</h1>
-        <p>Your account details and professional information</p>
+        <h1>{t("Profile Information")}</h1>
+        <p>{t("Your account details and professional information")}</p>
       </div>
 
       <div className="profile-section">
-        <h2>Personal Information</h2>
+        <h2>{t("Personal Information")}</h2>
         <div className="profile-grid">
           <div className="profile-item">
             <div className="profile-label">
               <UserIcon className="w-4 h-4" />
-              <span>Full Name</span>
+              <span>{t("Full Name")}</span>
             </div>
             <div className="profile-value">
               {profile.first_name && profile.last_name
                 ? `${profile.first_name} ${profile.last_name}`
-                : profile.first_name || profile.last_name || 'Not provided'}
+                : profile.first_name || profile.last_name || t("Not provided")}
             </div>
           </div>
 
           <div className="profile-item">
             <div className="profile-label">
-              <span className="font-medium">Username</span>
+              <span className="font-medium">{t("Username")}</span>
             </div>
             <div className="profile-value">{profile.username}</div>
           </div>
@@ -85,7 +88,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
           <div className="profile-item">
             <div className="profile-label">
               <EnvelopeIcon className="w-4 h-4" />
-              <span>Email</span>
+              <span>{t("Email")}</span>
             </div>
             <div className="profile-value">{profile.email}</div>
           </div>
@@ -93,16 +96,16 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
           <div className="profile-item">
             <div className="profile-label">
               <PhoneIcon className="w-4 h-4" />
-              <span>Phone</span>
+              <span>{t("Phone")}</span>
             </div>
             <div className="profile-value">
-              {profile.phone || 'Not provided'}
+              {profile.phone || t("Not provided")}
             </div>
           </div>
 
           <div className="profile-item">
             <div className="profile-label">
-              <span className="font-medium">Role</span>
+              <span className="font-medium">{t("Role")}</span>
             </div>
             <div className="profile-value">
               <span
@@ -115,7 +118,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
           <div className="profile-item">
             <div className="profile-label">
-              <span className="font-medium">Account Status</span>
+              <span className="font-medium">{t("Account Status")}</span>
             </div>
             <div className="profile-value">
               <span
@@ -125,7 +128,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                     : 'bg-red-100 text-red-800'
                 }`}
               >
-                {profile.is_active ? 'Active' : 'Inactive'}
+                {profile.is_active ? t("Active") : t("Inactive")}
               </span>
             </div>
           </div>
@@ -134,12 +137,12 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
       {(profile.role === 'provider' || profile.role === 'admin') && (
         <div className="profile-section">
-          <h2>Professional Information</h2>
+          <h2>{t("Professional Information")}</h2>
           <div className="profile-grid">
             {profile.specialty && (
               <div className="profile-item">
                 <div className="profile-label">
-                  <span className="font-medium">Specialty</span>
+                  <span className="font-medium">{t("Specialty")}</span>
                 </div>
                 <div className="profile-value">{profile.specialty}</div>
               </div>
@@ -149,7 +152,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
               <div className="profile-item">
                 <div className="profile-label">
                   <BuildingOfficeIcon className="w-4 h-4" />
-                  <span>Clinic Name</span>
+                  <span>{t("Clinic Name")}</span>
                 </div>
                 <div className="profile-value">{profile.clinic_name}</div>
               </div>
@@ -159,7 +162,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
               <div className="profile-item">
                 <div className="profile-label">
                   <MapPinIcon className="w-4 h-4" />
-                  <span>Clinic Address</span>
+                  <span>{t("Clinic Address")}</span>
                 </div>
                 <div className="profile-value">{profile.clinic_address}</div>
               </div>
@@ -169,24 +172,20 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
       )}
 
       <div className="profile-section">
-        <h2>Account Information</h2>
+        <h2>{t("Account Information")}</h2>
         <div className="profile-grid">
           <div className="profile-item">
             <div className="profile-label">
-              <span className="font-medium">Member Since</span>
+              <span className="font-medium">{t("Member Since")}</span>
             </div>
             <div className="profile-value">
-              {new Date(profile.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {new Date(profile.created_at).toLocaleDateString()}
             </div>
           </div>
 
           <div className="profile-item">
             <div className="profile-label">
-              <span className="font-medium">User ID</span>
+              <span className="font-medium">{t("User ID")}</span>
             </div>
             <div className="profile-value font-mono text-sm text-gray-600">
               {profile.id}

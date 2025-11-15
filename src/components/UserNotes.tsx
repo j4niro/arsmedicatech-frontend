@@ -3,6 +3,7 @@ import { MDXEditor } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import React, { useEffect, useState } from 'react';
 import { userNotesAPI } from '../services/api';
+import { useTranslation } from "react-i18next";
 
 // Import all the plugins we need
 import {
@@ -51,6 +52,7 @@ const UserNotes: React.FC<{
   note?: UserNote;
   onSave?: (note: UserNote) => void;
 }> = ({ note, onSave }) => {
+  const { t } = useTranslation();
   const [markdown, setMarkdown] = useState(note?.content || '');
   const [title, setTitle] = useState(note?.title || '');
   const [noteType, setNoteType] = useState<'private' | 'shared'>(
@@ -62,12 +64,12 @@ const UserNotes: React.FC<{
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert('Please enter a title for the note');
+      alert(t('Please enter a title for the note'));
       return;
     }
 
     if (!markdown.trim()) {
-      alert('Please enter some content for the note');
+      alert(t('Please enter some content for the note'));
       return;
     }
 
@@ -88,7 +90,7 @@ const UserNotes: React.FC<{
         if (response.success) {
           savedNote = response.note;
         } else {
-          throw new Error(response.error || 'Failed to update note');
+          throw new Error(response.error || t('Failed to update note'));
         }
       } else {
         // Create new note
@@ -96,7 +98,7 @@ const UserNotes: React.FC<{
         if (response.success) {
           savedNote = response.note;
         } else {
-          throw new Error(response.error || 'Failed to create note');
+          throw new Error(response.error || t('Failed to create note'));
         }
       }
 
@@ -105,8 +107,7 @@ const UserNotes: React.FC<{
       }
     } catch (error) {
       console.error('Error saving note:', error);
-      console.error('Error saving note:', error);
-      alert('An error occurred while saving the note. Please try again later.');
+      alert(t('An error occurred while saving the note. Please try again later.'));
     } finally {
       setIsSaving(false);
     }
@@ -118,7 +119,7 @@ const UserNotes: React.FC<{
         <div className="flex-1 mr-4">
           <input
             type="text"
-            placeholder="Note title..."
+            placeholder={t("Note title...")}
             value={title}
             onChange={e => setTitle(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xl font-semibold"
@@ -132,14 +133,14 @@ const UserNotes: React.FC<{
               disabled={isSaving}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-blue-400"
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? t("Saving...") : t("Save")}
             </button>
           )}
           <button
             onClick={() => setIsEditing(!isEditing)}
             className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
           >
-            {isEditing ? 'View' : 'Edit'}
+            {isEditing ? t("View") : t("Edit")}
           </button>
         </div>
       </div>
@@ -147,7 +148,7 @@ const UserNotes: React.FC<{
       {isEditing && (
         <div className="mb-4 flex space-x-4">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Type:</label>
+            <label className="text-sm font-medium text-gray-700">{t("Type")}:</label>
             <select
               value={noteType}
               onChange={e =>
@@ -155,15 +156,15 @@ const UserNotes: React.FC<{
               }
               className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="private">Private</option>
-              <option value="shared">Shared</option>
+              <option value="private">{t("Private")}</option>
+              <option value="shared">{t("Shared")}</option>
             </select>
           </div>
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Tags:</label>
+            <label className="text-sm font-medium text-gray-700">{t("Tags")}:</label>
             <input
               type="text"
-              placeholder="tag1, tag2, tag3..."
+              placeholder={t("tag1, tag2, tag3...")}
               value={tags.join(', ')}
               onChange={e =>
                 setTags(
@@ -221,6 +222,7 @@ const UserNotes: React.FC<{
 };
 
 const UserNotesScreen: React.FC = () => {
+  const { t } = useTranslation();
   const [notes, setNotes] = useState<UserNote[]>([]);
   const [selectedNote, setSelectedNote] = useState<UserNote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,11 +241,10 @@ const UserNotesScreen: React.FC = () => {
       if (response.success) {
         setNotes(response.notes);
       } else {
-        setError('Failed to load notes');
+        setError(t('Failed to load notes'));
       }
     } catch (err) {
-      setError('Error loading notes');
-      console.error('Error loading notes:', err);
+      setError(t('Error loading notes'));
     } finally {
       setIsLoading(false);
     }
@@ -262,7 +263,6 @@ const UserNotesScreen: React.FC = () => {
   const handleSaveNote = async (note: UserNote) => {
     try {
       if (note.id) {
-        // Update existing note - only send the fields to update, not the entire note object
         const updateData = {
           title: note.title,
           content: note.content,
@@ -275,7 +275,6 @@ const UserNotesScreen: React.FC = () => {
           setSelectedNote(response.note);
         }
       } else {
-        // Create new note
         const response = await userNotesAPI.create(note);
         if (response.success) {
           setNotes([response.note, ...notes]);
@@ -284,13 +283,12 @@ const UserNotesScreen: React.FC = () => {
         }
       }
     } catch (err) {
-      setError('Error saving note');
-      console.error('Error saving note:', err);
+      setError(t('Error saving note'));
     }
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    if (!confirm(t('Are you sure you want to delete this note?'))) return;
 
     try {
       const response = await userNotesAPI.delete(noteId);
@@ -301,8 +299,7 @@ const UserNotesScreen: React.FC = () => {
         }
       }
     } catch (err) {
-      setError('Error deleting note');
-      console.error('Error deleting note:', err);
+      setError(t('Error deleting note'));
     }
   };
 
@@ -321,18 +318,18 @@ const UserNotesScreen: React.FC = () => {
       <div className="w-1/3 border-r border-gray-200 p-4">
         <div className="mb-4">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">My Notes</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{t("My Notes")}</h1>
             <button
               onClick={handleNewNote}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
             >
-              New Note
+              {t("New Note")}
             </button>
           </div>
 
           <input
             type="text"
-            placeholder="Search notes..."
+            placeholder={t("Search notes...")}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -340,7 +337,7 @@ const UserNotesScreen: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8">Loading notes...</div>
+          <div className="text-center py-8">{t("Loading notes...")}</div>
         ) : error ? (
           <div className="text-red-600 py-8">{error}</div>
         ) : (
@@ -371,7 +368,7 @@ const UserNotesScreen: React.FC = () => {
                             : 'bg-green-100 text-green-700'
                         }`}
                       >
-                        {note.note_type}
+                        {t(note.note_type === "private" ? "Private" : "Shared")}
                       </span>
                       {note.tags.map((tag, index) => (
                         <span
@@ -383,6 +380,7 @@ const UserNotesScreen: React.FC = () => {
                       ))}
                     </div>
                   </div>
+
                   <button
                     onClick={e => {
                       e.stopPropagation();
@@ -400,7 +398,7 @@ const UserNotesScreen: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a 1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
                   </button>
@@ -430,12 +428,10 @@ const UserNotesScreen: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h 5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a 2 2 0 01-2 2z"
                 />
               </svg>
-              <p className="text-lg">
-                Select a note to view or create a new one
-              </p>
+              <p className="text-lg">{t("Select a note to view or create a new one")}</p>
             </div>
           </div>
         )}

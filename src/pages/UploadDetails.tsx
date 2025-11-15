@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fileUploadAPI } from '../services/api';
 import logger from '../services/logging';
+import { useTranslation } from 'react-i18next';
 
 interface Upload {
   id: string;
@@ -19,14 +20,16 @@ interface Upload {
 }
 
 const statusColors: Record<string, string> = {
-  pending: '#fbbf24', // amber
-  processing: '#60a5fa', // blue
-  completed: '#22c55e', // green
-  failed: '#ef4444', // red
-  cancelled: '#a1a1aa', // gray
+  pending: '#fbbf24',
+  processing: '#60a5fa',
+  completed: '#22c55e',
+  failed: '#ef4444',
+  cancelled: '#a1a1aa',
 };
 
 const UploadDetails: React.FC = () => {
+  const { t } = useTranslation();
+
   const { uploadId } = useParams<{ uploadId: string }>();
   const navigate = useNavigate();
   const [upload, setUpload] = useState<Upload | null>(null);
@@ -49,7 +52,7 @@ const UploadDetails: React.FC = () => {
       setUpload(uploadData);
       logger.debug('Upload details loaded:', uploadData);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to load upload details.');
+      setError(t('upload_load_error'));
       logger.error('Error loading upload details:', err);
     } finally {
       setLoading(false);
@@ -57,7 +60,7 @@ const UploadDetails: React.FC = () => {
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return t('file_size_zero');
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -68,7 +71,7 @@ const UploadDetails: React.FC = () => {
     return (
       <div style={{ maxWidth: 800, margin: '40px auto', padding: 24 }}>
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          Loading upload details...
+          {t('loading_upload_details')}
         </div>
       </div>
     );
@@ -89,7 +92,7 @@ const UploadDetails: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Back to Uploads
+          {t('back_to_uploads')}
         </button>
       </div>
     );
@@ -99,7 +102,7 @@ const UploadDetails: React.FC = () => {
     return (
       <div style={{ maxWidth: 800, margin: '40px auto', padding: 24 }}>
         <div style={{ color: '#ef4444', marginBottom: 12 }}>
-          Upload not found.
+          {t('upload_not_found')}
         </div>
         <button
           onClick={() => navigate('/uploads')}
@@ -112,7 +115,7 @@ const UploadDetails: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Back to Uploads
+          {t('back_to_uploads')}
         </button>
       </div>
     );
@@ -135,11 +138,13 @@ const UploadDetails: React.FC = () => {
             gap: 8,
           }}
         >
-          ← Back to Uploads
+          ← {t('back_to_uploads')}
         </button>
+
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
           {upload.file_name}
         </h1>
+
         <div
           style={{
             display: 'flex',
@@ -158,10 +163,11 @@ const UploadDetails: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {upload.status.charAt(0).toUpperCase() + upload.status.slice(1)}
+            {t(`status_${upload.status}`)}
           </span>
+
           <span style={{ color: '#6b7280' }}>
-            Uploaded {new Date(upload.date_uploaded).toLocaleString()}
+            {t('uploaded_on')} {new Date(upload.date_uploaded).toLocaleString()}
           </span>
         </div>
       </div>
@@ -174,53 +180,61 @@ const UploadDetails: React.FC = () => {
           marginBottom: 32,
         }}
       >
+        {/* FILE INFORMATION */}
         <div style={{ background: '#f9fafb', padding: 20, borderRadius: 8 }}>
           <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>
-            File Information
+            {t('file_information')}
           </h3>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div>
-              <strong>File Type:</strong> {upload.file_type.toUpperCase()}
+              <strong>{t('file_type')}:</strong> {upload.file_type.toUpperCase()}
             </div>
             <div>
-              <strong>File Size:</strong> {formatFileSize(upload.file_size)}
+              <strong>{t('file_size')}:</strong> {formatFileSize(upload.file_size)}
             </div>
+
             {upload.file_path && (
               <div>
-                <strong>File Path:</strong> {upload.file_path}
+                <strong>{t('file_path')}:</strong> {upload.file_path}
               </div>
             )}
+
             {upload.bucket_name && (
               <div>
-                <strong>Bucket:</strong> {upload.bucket_name}
+                <strong>{t('bucket')}:</strong> {upload.bucket_name}
               </div>
             )}
           </div>
         </div>
 
+        {/* PROCESSING DETAILS */}
         <div style={{ background: '#f9fafb', padding: 20, borderRadius: 8 }}>
           <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>
-            Processing Details
+            {t('processing_details')}
           </h3>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div>
-              <strong>Status:</strong>{' '}
-              {upload.status.charAt(0).toUpperCase() + upload.status.slice(1)}
+              <strong>{t('status')}:</strong> {t(`status_${upload.status}`)}
             </div>
+
             {upload.task_id && (
               <div>
-                <strong>Task ID:</strong> {upload.task_id}
+                <strong>{t('task_id')}:</strong> {upload.task_id}
               </div>
             )}
+
             {upload.uploader && (
               <div>
-                <strong>Uploader:</strong> {upload.uploader}
+                <strong>{t('uploader')}:</strong> {upload.uploader}
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* COMPLETED WITH TEXT */}
       {upload.status === 'completed' && upload.processed_text && (
         <div
           style={{
@@ -231,8 +245,9 @@ const UploadDetails: React.FC = () => {
           }}
         >
           <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>
-            Extracted Text Content
+            {t('extracted_text')}
           </h3>
+
           <div
             style={{
               background: '#f8fafc',
@@ -252,6 +267,7 @@ const UploadDetails: React.FC = () => {
         </div>
       )}
 
+      {/* COMPLETED WITHOUT TEXT */}
       {upload.status === 'completed' && !upload.processed_text && (
         <div
           style={{
@@ -262,13 +278,12 @@ const UploadDetails: React.FC = () => {
           }}
         >
           <p style={{ color: '#92400e', margin: 0 }}>
-            This file has been processed but no text content was extracted. This
-            may be normal for certain file types or if the file didn't contain
-            extractable text.
+            {t('no_text_extracted')}
           </p>
         </div>
       )}
 
+      {/* FAILED */}
       {upload.status === 'failed' && (
         <div
           style={{
@@ -279,12 +294,12 @@ const UploadDetails: React.FC = () => {
           }}
         >
           <p style={{ color: '#991b1b', margin: 0 }}>
-            This file failed to process. Please try uploading again or contact
-            support if the issue persists.
+            {t('processing_failed')}
           </p>
         </div>
       )}
 
+      {/* PROCESSING */}
       {upload.status === 'processing' && (
         <div
           style={{
@@ -295,8 +310,7 @@ const UploadDetails: React.FC = () => {
           }}
         >
           <p style={{ color: '#1e40af', margin: 0 }}>
-            This file is currently being processed. Please check back in a few
-            moments.
+            {t('processing_in_progress')}
           </p>
         </div>
       )}

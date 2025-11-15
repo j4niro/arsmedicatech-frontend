@@ -7,6 +7,7 @@ import { useSignupPopup } from '../hooks/useSignupPopup';
 import { appointmentService } from '../services/appointments';
 import authService from '../services/auth';
 import logger from '../services/logging';
+import { useTranslation } from 'react-i18next';
 import './Schedule.css';
 
 interface Appointment {
@@ -30,6 +31,8 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 const Schedule = () => {
+  const { t } = useTranslation();
+
   const [calendarValue, setCalendarValue] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -46,10 +49,9 @@ const Schedule = () => {
           const response = await appointmentService.getAppointments();
           logger.debug('Backend appointments response:', response);
 
-          // Convert backend appointments to frontend format
           const convertedAppointments = response.appointments.map(apt => ({
             id: apt.id,
-            patientName: `Patient ${apt.patient_id}`, // We'll need to get actual patient names later
+            patientName: `Patient ${apt.patient_id}`,
             appointmentDate: apt.appointment_date,
             startTime: apt.start_time,
             endTime: apt.end_time,
@@ -62,7 +64,6 @@ const Schedule = () => {
           setAppointments(convertedAppointments);
         } catch (error) {
           console.error('Error loading appointments:', error);
-          // For now, keep using local appointments if backend fails
         }
       }
     };
@@ -70,7 +71,6 @@ const Schedule = () => {
     loadAppointments();
   }, [isAuthenticated]);
 
-  // Also load appointments when component becomes visible (for navigation back)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated) {
@@ -164,11 +164,6 @@ const Schedule = () => {
         logger.debug('Appointments refreshed:', convertedAppointments);
       } catch (error) {
         console.error('Error refreshing appointments:', error);
-        console.error('Error details:', {
-          message: (error as Error).message,
-          stack: (error as Error).stack,
-          name: (error as Error).name,
-        });
       }
     }
   };
@@ -179,9 +174,8 @@ const Schedule = () => {
     setError('');
 
     try {
-      // Convert frontend form data to backend format
       const backendData = {
-        patient_id: '1', // For now, use a default patient ID - we'll need to implement patient selection
+        patient_id: '1',
         appointment_date: appointmentData.appointmentDate,
         start_time: appointmentData.startTime,
         end_time: appointmentData.endTime,
@@ -192,23 +186,20 @@ const Schedule = () => {
 
       logger.debug('Sending to backend:', backendData);
 
-      // Send to backend
       const newBackendAppointment =
         await appointmentService.createAppointment(backendData);
       logger.debug('Backend response:', newBackendAppointment);
 
-      // Refresh the appointments list from the backend
       await refreshAppointments();
 
       setSelectedDate(null);
       setIsModalOpen(false);
 
-      // Show success message
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
       console.error('Error creating appointment:', error);
-      setError('Failed to create appointment. Please try again.');
+      setError(t('error_create_appointment'));
     } finally {
       setIsSubmitting(false);
     }
@@ -231,8 +222,8 @@ const Schedule = () => {
               />
             ))}
             {dayAppointments.length > 3 && (
-              <div className="appointment-more">
-                +{dayAppointments.length - 3}
+              <div className="appointment-more">+
+                {dayAppointments.length - 3}
               </div>
             )}
           </div>
@@ -246,7 +237,6 @@ const Schedule = () => {
     if (view === 'month') {
       const classes: string[] = [];
 
-      // Check if this date has appointments
       const dayAppointments = appointments.filter(apt =>
         isSameDay(date, new Date(apt.appointmentDate))
       );
@@ -254,7 +244,6 @@ const Schedule = () => {
         classes.push('has-appointments');
       }
 
-      // Check if this is the selected date
       if (selectedDate && isSameDay(date, selectedDate)) {
         classes.push('selected-date');
       }
@@ -289,34 +278,36 @@ const Schedule = () => {
     <>
       <div className="schedule-container">
         <div className="schedule-header">
-          <h2>Schedule</h2>
+          <h2>{t('schedule_title')}</h2>
+
           {!isAuthenticated && (
             <div className="guest-notice">
-              <p>Sign up to create and manage appointments</p>
+              <p>{t('signup_to_manage')}</p>
               <button onClick={showSignupPopup} className="guest-action-button">
-                Get Started
+                {t('get_started')}
               </button>
             </div>
           )}
+
           {isAuthenticated && (
             <div className="schedule-actions">
               <button
                 onClick={refreshAppointments}
                 className="btn-primary mr-2"
-                title="Refresh appointments"
+                title={t('refresh')}
               >
-                ↻ Refresh
+                ↻ {t('refresh')}
               </button>
+
               <button
                 onClick={() => {
                   logger.debug('New Appointment button clicked');
                   setSelectedDate(new Date());
                   setIsModalOpen(true);
-                  logger.debug('Modal should be open:', true);
                 }}
                 className="btn-primary"
               >
-                New Appointment
+                {t('new_appointment')}
               </button>
             </div>
           )}
@@ -332,10 +323,11 @@ const Schedule = () => {
           />
         </div>
 
-        {/* Appointments for selected date */}
         {selectedDate && isAuthenticated && (
           <div className="appointments-list">
-            <h3>Appointments for {selectedDate.toLocaleDateString()}</h3>
+            <h3>
+              {t('appointments_for')} {selectedDate.toLocaleDateString()}
+            </h3>
             <div className="appointments-grid">
               {getAppointmentsForDate(selectedDate).map(appointment => (
                 <div key={appointment.id} className="appointment-card">
@@ -349,19 +341,20 @@ const Schedule = () => {
                     {appointment.appointmentType}
                   </div>
                   <div
-                    className={`appointment-status ${getStatusColor(appointment.status)}`}
+                    className={`appointment-status ${getStatusColor(
+                      appointment.status
+                    )}`}
                   >
-                    {appointment.status}
+                    {t(`status_${appointment.status}`)}
                   </div>
                   {appointment.notes && (
                     <div className="appointment-notes">{appointment.notes}</div>
                   )}
                 </div>
               ))}
+
               {getAppointmentsForDate(selectedDate).length === 0 && (
-                <p className="no-appointments">
-                  No appointments scheduled for this date.
-                </p>
+                <p className="no-appointments">{t('no_appointments')}</p>
               )}
             </div>
           </div>
@@ -370,27 +363,24 @@ const Schedule = () => {
 
       <SignupPopup isOpen={isPopupOpen} onClose={hideSignupPopup} />
 
-      {/* Success Message */}
       {showSuccessMessage && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50">
-          Appointment created successfully!
+          {t('appointment_success')}
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50">
           {error}
         </div>
       )}
 
-      {/* Loading Overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-xl">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p>Creating appointment...</p>
+              <p>{t('creating_appointment')}</p>
             </div>
           </div>
         </div>
@@ -408,7 +398,6 @@ const Schedule = () => {
         isSubmitting={isSubmitting}
       />
 
-      {/* Debug info */}
       {process.env.NODE_ENV === 'development' && (
         <div
           style={{

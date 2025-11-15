@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
 import { fileUploadAPI } from '../services/api';
 import logger from '../services/logging';
+import { useTranslation } from 'react-i18next';
 
 interface Upload {
   id: string;
@@ -15,58 +16,60 @@ interface Upload {
 }
 
 const statusColors: Record<string, string> = {
-  pending: '#fbbf24', // amber
-  processing: '#60a5fa', // blue
-  completed: '#22c55e', // green
-  failed: '#ef4444', // red
-  cancelled: '#a1a1aa', // gray
+  pending: '#fbbf24',
+  processing: '#60a5fa',
+  completed: '#22c55e',
+  failed: '#ef4444',
+  cancelled: '#a1a1aa',
 };
 
 const FileUpload: React.FC = () => {
+  const { t } = useTranslation();
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Fetch uploads list
   const fetchUploads = useCallback(async () => {
     try {
       const res = await fileUploadAPI.getAll();
       setUploads(res);
     } catch (err) {
-      setError('Failed to fetch uploads.');
+      setError(t("ErrorLoadingResults"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchUploads();
-    const interval = setInterval(fetchUploads, 4000); // auto-refresh every 4s
+    const interval = setInterval(fetchUploads, 4000);
     return () => clearInterval(interval);
   }, [fetchUploads]);
 
-  // Handle file drop
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setError(null);
       setSuccess(null);
+
       if (!acceptedFiles.length) return;
       setUploading(true);
+
       const file = acceptedFiles[0];
       const formData = new FormData();
       formData.append('file', file);
+
       try {
         const res = await fileUploadAPI.create(formData);
         logger.debug('File uploaded successfully:', res);
-        setSuccess('File uploaded!');
+        setSuccess(t("FileUpload"));
         fetchUploads();
       } catch (err: any) {
-        setError(err?.response?.data?.error || 'Upload failed.');
+        setError(t("failed"));
       } finally {
         setUploading(false);
       }
     },
-    [fetchUploads]
+    [fetchUploads, t]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -83,8 +86,9 @@ const FileUpload: React.FC = () => {
   return (
     <div style={{ maxWidth: 600, margin: '40px auto', padding: 24 }}>
       <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24 }}>
-        File Upload
+        {t("FileUpload")}
       </h2>
+
       <div
         {...getRootProps()}
         style={{
@@ -101,23 +105,25 @@ const FileUpload: React.FC = () => {
       >
         <input {...getInputProps()} />
         {isDragActive ? (
-          <p>Drop the file here ...</p>
+          <p>{t("DragDrop")}</p>
         ) : (
-          <p>Drag & drop a file here, or click to select</p>
+          <p>{t("DragDrop")}</p>
         )}
+
         {uploading && (
-          <p style={{ color: '#60a5fa', marginTop: 8 }}>Uploading...</p>
+          <p style={{ color: '#60a5fa', marginTop: 8 }}>
+            {t("Uploading")}
+          </p>
         )}
       </div>
-      {error && (
-        <div style={{ color: '#ef4444', marginBottom: 12 }}>{error}</div>
-      )}
-      {success && (
-        <div style={{ color: '#22c55e', marginBottom: 12 }}>{success}</div>
-      )}
+
+      {error && <div style={{ color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+      {success && <div style={{ color: '#22c55e', marginBottom: 12 }}>{success}</div>}
+
       <h3 style={{ fontSize: 20, fontWeight: 600, margin: '24px 0 12px' }}>
-        Your Uploads
+        {t("uploads")}
       </h3>
+
       <div
         style={{
           border: '1px solid #e5e7eb',
@@ -126,25 +132,28 @@ const FileUpload: React.FC = () => {
         }}
       >
         {uploads.length === 0 ? (
-          <div style={{ padding: 24, color: '#888' }}>No uploads yet.</div>
+          <div style={{ padding: 24, color: '#888' }}>
+            {t("NoUploads")}
+          </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f3f4f6' }}>
                 <th style={{ padding: 10, textAlign: 'left', fontWeight: 500 }}>
-                  File
+                  {t("FileUpload")}
                 </th>
                 <th style={{ padding: 10, textAlign: 'left', fontWeight: 500 }}>
-                  Type
+                  {t("Type")}
                 </th>
                 <th style={{ padding: 10, textAlign: 'left', fontWeight: 500 }}>
-                  Uploaded
+                  {t("Uploaded")}
                 </th>
                 <th style={{ padding: 10, textAlign: 'left', fontWeight: 500 }}>
-                  Status
+                  {t("Status")}
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {uploads.map(u => (
                 <tr
@@ -184,7 +193,7 @@ const FileUpload: React.FC = () => {
                         fontSize: 14,
                       }}
                     >
-                      {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
+                      {t(`common.${u.status}`)}
                     </span>
                   </td>
                 </tr>

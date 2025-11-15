@@ -1,379 +1,228 @@
-import React, { useEffect, useState } from 'react';
-import ClinicList from '../components/ClinicList';
-import OrganizationForm from '../components/OrganizationForm';
-import { useUser } from '../components/UserContext';
-import { organizationAPI } from '../services/api';
+import React, { useState } from 'react';
+import OptimalTable, { TableColumn, TableRow } from '../components/OptimalTable';
+import apiService from '../services/api';
+import { useTranslation } from 'react-i18next';
 
-const OrganizationPage: React.FC = () => {
-  const { user, isAuthenticated, isLoading } = useUser();
-  const [org, setOrg] = useState<any | null>(null);
-  const [orgLoading, setOrgLoading] = useState(false);
+const OptimalTableDemo: React.FC = () => {
+  const { t } = useTranslation();
+
+  const columns: TableColumn[] = [
+    { key: 'food', header: t('food_item'), type: 'text', editable: true },
+    { key: 'sodium_mg', header: t('sodium'), type: 'number', editable: true, unit: 'mg', min: 0, max: 1000 },
+    { key: 'potassium_mg', header: t('potassium'), type: 'number', editable: true, unit: 'mg', min: 0, max: 2000 },
+    { key: 'fiber_g', header: t('fiber'), type: 'number', editable: true, unit: 'g', min: 0, max: 50 },
+    { key: 'saturated_fat_g', header: t('saturated_fat'), type: 'number', editable: true, unit: 'g', min: 0, max: 50 },
+    { key: 'calories', header: t('calories'), type: 'number', editable: true, unit: 'kcal', min: 0, max: 1000 },
+    { key: 'allergy', header: t('allergy_risk'), type: 'boolean', editable: true }
+  ];
+
+  const initialData: TableRow[] = [
+    { id: '1', food: 'Oats', sodium_mg: 2, potassium_mg: 429, fiber_g: 10.6, saturated_fat_g: 1.1, calories: 389, allergy: false },
+    { id: '2', food: 'Salmon', sodium_mg: 59, potassium_mg: 628, fiber_g: 0, saturated_fat_g: 1.0, calories: 208, allergy: false },
+    { id: '3', food: 'Spinach', sodium_mg: 79, potassium_mg: 558, fiber_g: 2.2, saturated_fat_g: 0, calories: 23, allergy: false },
+    { id: '4', food: 'Banana', sodium_mg: 1, potassium_mg: 358, fiber_g: 2.6, saturated_fat_g: 0.1, calories: 89, allergy: false },
+    { id: '5', food: 'Almonds', sodium_mg: 1, potassium_mg: 705, fiber_g: 12.5, saturated_fat_g: 3.8, calories: 579, allergy: true }
+  ];
+
+  const [tableData, setTableData] = useState<TableRow[]>(initialData);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [optimalResult, setOptimalResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
 
-  // Fetch organization for the current user (if any)
-  useEffect(() => {
-    const fetchOrg = async () => {
-      if (!user || !isAuthenticated) return;
-      setOrgLoading(true);
-      setError(null);
-      try {
-        const found = await organizationAPI.getById(user.id);
-        setOrg(found || null);
-      } catch (error) {
-        setError('Failed to fetch organization');
-      } finally {
-        setOrgLoading(false);
-      }
-    };
-    fetchOrg();
-  }, [user, isAuthenticated]);
+  const handleDataChange = (newData: TableRow[]) => {
+    setTableData(newData);
+  };
 
-  const handleEdit = () => setEditing(true);
-  const handleCancelEdit = () => setEditing(false);
+  const handleExportData = () => {
+    const csvContent = [
+      columns.map(col => col.header).join(','),
+      ...tableData.map(row => columns.map(col => row[col.key]).join(','))
+    ].join('\n');
 
-  const handleUpdateOrg = async (updatedOrg: any) => {
-    if (!org || !org.id) return;
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'food_nutrition_data.csv';
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleResetData = () => {
+    setTableData(initialData);
+    setOptimalResult(null);
     setError(null);
-    setOrgLoading(true);
+  };
+
+  const handleProcessWithOptimal = async () => {
+    setIsProcessing(true);
+    setError(null);
+    setOptimalResult(null);
+
     try {
-      const res = await organizationAPI.update(org.id, updatedOrg);
-      const data = await res.json();
-      if (res.ok) {
-        setOrg(data.organization || updatedOrg);
-        setEditing(false);
-      } else {
-        setError(data.error || 'Failed to update organization');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Network error');
+      const result = await apiService.callOptimal(tableData);
+      setOptimalResult(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('error_process'));
     } finally {
-      setOrgLoading(false);
+      setIsProcessing(false);
     }
   };
-
-  const handleOrgUpdate = async () => {
-    if (!user || !isAuthenticated) return;
-    try {
-      const found = await organizationAPI.getById(user.id);
-      setOrg(found || null);
-    } catch (error) {
-      setError('Failed to refresh organization data');
-    }
-  };
-
-  if (isLoading || orgLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading organization...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <svg
-                className="h-6 w-6 text-red-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              Authentication Required
-            </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              You must be logged in to manage organizations.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (
-    user.role !== 'admin' &&
-    user.role !== 'administrator' &&
-    user.role !== 'superadmin'
-  ) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-              <svg
-                className="h-6 w-6 text-yellow-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              Access Denied
-            </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              You do not have permission to manage organizations.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (org) {
-    if (editing) {
-      return (
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Edit Organization
-                </h2>
-                <button
-                  onClick={handleCancelEdit}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Cancel
-                </button>
-              </div>
-              <OrganizationForm
-                onSuccess={handleUpdateOrg}
-                createdBy={user.id}
-                initialValues={org}
-              />
-              {error && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-red-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-red-800">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Organization Details
-              </h2>
-              <button
-                onClick={handleEdit}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <svg
-                  className="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                Edit
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Organization Name
-                  </label>
-                  <p className="mt-1 text-lg text-gray-900">{org.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Type
-                  </label>
-                  <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {org.org_type}
-                  </span>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Country
-                  </label>
-                  <p className="mt-1 text-lg text-gray-900">
-                    {org.country || 'Not specified'}
-                  </p>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <p className="mt-1 text-gray-900">
-                  {org.description || 'No description provided'}
-                </p>
-              </div>
-            </div>
-
-            {/* Clinics Section */}
-            <div className="mt-8 border-t border-gray-200 pt-8">
-              <ClinicList organizationId={org.id} onUpdate={handleOrgUpdate} />
-            </div>
-
-            {error && (
-              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-center mb-8">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
-              <svg
-                className="h-6 w-6 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-            </div>
-            <h2 className="mt-4 text-2xl font-bold text-gray-900">
-              Create Your Organization
-            </h2>
-            <p className="mt-2 text-gray-600">
-              Set up your organization to get started with the platform.
-            </p>
+      <div className="max-w-7xl mx-auto px-4">
+        
+        {/* HEADER */}
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          {t('title')}
+        </h1>
+        <p className="text-lg text-gray-600 mb-8">
+          {t('description')}
+        </p>
 
-            {/* Organization Limit Info */}
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex items-center justify-center">
-                <svg
-                  className="h-5 w-5 text-blue-400 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="text-sm text-blue-800">
-                  <strong>Organization Limit:</strong> You can create up to 1
-                  organization.
-                  {user.max_organizations &&
-                    user.user_organizations !== undefined && (
-                      <span>
-                        {' '}
-                        You have created {user.user_organizations} of{' '}
-                        {user.max_organizations} allowed.
-                      </span>
-                    )}
-                </p>
-              </div>
+        {/* BUTTONS */}
+        <div className="mb-6 flex space-x-4">
+          <button onClick={handleExportData}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            {t('export_csv')}
+          </button>
+
+          <button onClick={handleResetData}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            {t('reset_data')}
+          </button>
+
+          <button onClick={handleProcessWithOptimal}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400">
+            {isProcessing ? t('processing') : t('process_optimal')}
+          </button>
+        </div>
+
+        {/* TABLE */}
+        <OptimalTable
+          columns={columns}
+          data={tableData}
+          title={t('table_title')}
+          onDataChange={handleDataChange}
+          showAddRow={true}
+          showDeleteRow={true}
+          maxRows={20}
+          className="mb-8"
+        />
+
+        {/* ERROR */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-red-800">
+              {t('error_title')}
+            </h3>
+            <p className="text-red-700 mt-1">{error}</p>
+          </div>
+        )}
+
+        {/* OPTIMAL RESULTS */}
+        {optimalResult && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-green-800 mb-4">
+              {t('optimal_results')}
+            </h3>
+
+            {optimalResult.result && (
+              <>
+                <h4 className="text-lg font-medium text-green-700 mb-3">
+                  {t('optimization_results')}
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <span className="font-medium">{t('status')}:</span>
+                    <div>{optimalResult.result.status}</div>
+                  </div>
+
+                  {optimalResult.result.fun && (
+                    <div className="bg-purple-50 p-3 rounded-lg">
+                      <span className="font-medium">{t('objective_value')}:</span>
+                      <div>{optimalResult.result.fun.toFixed(4)}</div>
+                    </div>
+                  )}
+
+                  {optimalResult.result.nit && (
+                    <div className="bg-orange-50 p-3 rounded-lg">
+                      <span className="font-medium">{t('iterations')}:</span>
+                      <div>{optimalResult.result.nit}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* EXPLANATION */}
+                {optimalResult.result.fun && (
+                  <div className="mt-6 bg-yellow-50 p-4 border border-yellow-200 rounded-lg">
+                    <h5 className="font-medium">{t('objective_meaning_title')}</h5>
+                    <p className="text-sm mt-2">{t('objective_meaning_text')}</p>
+                  </div>
+                )}
+
+                {/* SERVINGS */}
+                {optimalResult.result.x && (
+                  <>
+                    <h5 className="mt-6 font-medium text-green-700">
+                      {t('recommended_servings')}
+                    </h5>
+
+                    {/* BARS */}
+                    <div className="mt-4 space-y-2">
+                      {optimalResult.result.x.map((serving: number, index: number) => {
+                        const foodItem = optimalResult.tableData[index];
+                        const rounded = Math.round(serving * 100) / 100;
+                        const isRecommended = serving > 0.01;
+
+                        return (
+                          <div key={index} className="flex items-center space-x-3">
+                            <div className="w-24">{foodItem?.food}</div>
+                            <div className="flex-1 bg-gray-200 h-4 rounded-full">
+                              <div
+                                className={`h-4 rounded-full ${isRecommended ? 'bg-green-600' : 'bg-gray-400'}`}
+                                style={{ width: `${serving * 100}%` }}
+                              />
+                            </div>
+                            <div className="w-16 text-right font-bold">
+                              {rounded > 0.01 ? `${rounded}g` : '0g'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* RAW PROCESSED DATA */}
+            <div className="mt-6">
+              <h4 className="font-medium text-green-700 mb-2">
+                {t('processed_data')}
+              </h4>
+              <pre className="bg-white p-4 rounded-lg border text-sm overflow-auto">
+                {JSON.stringify(optimalResult.tableData, null, 2)}
+              </pre>
             </div>
           </div>
+        )}
 
-          <OrganizationForm onSuccess={setOrg} createdBy={user.id} />
-
-          {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
+        {/* CURRENT TABLE DATA */}
+        <div className="bg-white p-6 rounded-xl shadow-md border">
+          <h3 className="font-semibold mb-4">{t('current_data')}</h3>
+          <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm">
+            {JSON.stringify(tableData, null, 2)}
+          </pre>
         </div>
       </div>
     </div>
   );
 };
 
-export default OrganizationPage;
+export default OptimalTableDemo;

@@ -2,8 +2,7 @@ import { Box, Tab, Tabs, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../services/api';
-
-// Dummy types
+import { useTranslation } from "react-i18next";
 
 type UserRole = 'administrator' | 'superadmin';
 type Organization = { id: string; name: string };
@@ -20,45 +19,43 @@ const TABS = [
   { key: 'admins', label: 'Administrators' },
 ];
 
-const columns: Record<string, GridColDef[]> = {
-  organizations: [
-    { field: 'id', headerName: 'ID', width: 150 },
-    { field: 'name', headerName: 'Name', width: 250 },
-  ],
-  clinics: [
-    { field: 'id', headerName: 'ID', width: 150 },
-    { field: 'name', headerName: 'Name', width: 250 },
-  ],
-  providers: [
-    { field: 'id', headerName: 'ID', width: 150 },
-    { field: 'name', headerName: 'Name', width: 250 },
-  ],
-  patients: [
-    { field: 'id', headerName: 'ID', width: 150 },
-    { field: 'name', headerName: 'Name', width: 250 },
-  ],
-  admins: [
-    { field: 'id', headerName: 'ID', width: 150 },
-    { field: 'email', headerName: 'Email', width: 250 },
-  ],
-};
-
 const Administration: React.FC = () => {
+  const { t } = useTranslation();
+
+  const columns: Record<string, GridColDef[]> = {
+    organizations: [
+      { field: 'id', headerName: t('ID'), width: 150 },
+      { field: 'name', headerName: t('Name'), width: 250 },
+    ],
+    clinics: [
+      { field: 'id', headerName: t('ID'), width: 150 },
+      { field: 'name', headerName: t('Name'), width: 250 },
+    ],
+    providers: [
+      { field: 'id', headerName: t('ID'), width: 150 },
+      { field: 'name', headerName: t('Name'), width: 250 },
+    ],
+    patients: [
+      { field: 'id', headerName: t('ID'), width: 150 },
+      { field: 'name', headerName: t('Name'), width: 250 },
+    ],
+    admins: [
+      { field: 'id', headerName: t('ID'), width: 150 },
+      { field: 'email', headerName: t('Email'), width: 250 },
+    ],
+  };
+
   const [activeTab, setActiveTab] = useState(0);
   const [role, setRole] = useState<UserRole | null>(null);
 
-  // Example data states (replace with real API data)
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [admins, setAdmins] = useState<Admin[]>([]);
-
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Allow user to select organization if role is superadmin
-
     adminAPI
       .getOrganizationId()
       .then(response => {
@@ -73,8 +70,7 @@ const Administration: React.FC = () => {
       });
 
     const fetchData = async () => {
-      // TODO: Fetch user role from API or context
-      setRole('administrator'); // or "superadmin"
+      setRole('administrator');
 
       if (role === 'superadmin') {
         setOrganizations(await adminAPI.getOrganizations());
@@ -87,6 +83,7 @@ const Administration: React.FC = () => {
         setAdmins(await adminAPI.getAdministrators(organizationId));
       }
     };
+
     fetchData();
   }, []);
 
@@ -107,15 +104,12 @@ const Administration: React.FC = () => {
     }
   };
 
-  const getColumns = () => {
-    return columns[TABS[activeTab].key];
-  };
-
   return (
     <Box sx={{ width: '100%', p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Administration
+        {t("Administration")}
       </Typography>
+
       <Tabs
         value={activeTab}
         onChange={(_, newValue) => setActiveTab(newValue)}
@@ -123,13 +117,14 @@ const Administration: React.FC = () => {
         sx={{ mb: 2 }}
       >
         {TABS.map((tab, idx) => (
-          <Tab key={tab.key} label={tab.label} />
+          <Tab key={tab.key} label={t(tab.label)} />
         ))}
       </Tabs>
+
       <Box sx={{ height: 400, width: '100%' }}>
         <DataGrid
           rows={getRows()}
-          columns={getColumns()}
+          columns={columns[TABS[activeTab].key]}
           pageSizeOptions={[5, 10, 20]}
           initialState={{
             pagination: {
@@ -138,17 +133,8 @@ const Administration: React.FC = () => {
           }}
           disableRowSelectionOnClick
           disableColumnMenu
-          // For superadmin, make sure all actions are read-only
-          // For administrator, you can add edit/delete actions here
         />
       </Box>
-      {/*
-        TODO:
-        - Replace dummy data with API calls
-        - Add loading/error states
-        - Add role-based actions (edit/delete for admin, read-only for superadmin)
-        - Hide sensitive fields for superadmin
-      */}
     </Box>
   );
 };
