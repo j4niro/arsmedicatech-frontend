@@ -3,11 +3,13 @@ import { useSignupPopup } from '../hooks/useSignupPopup';
 import authService from '../services/auth';
 import { PatientType } from '../types';
 import SignupPopup from './SignupPopup';
+import { useTranslation } from "react-i18next";
 
 import { Link, useNavigate } from 'react-router-dom';
 import { patientAPI } from '../services/api';
 
 const PatientList = () => {
+  const { t } = useTranslation();
   const [patients, setPatients] = useState<PatientType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,27 +25,23 @@ const PatientList = () => {
     try {
       setLoading(true);
       const response = await patientAPI.getAll();
-      // Handle both response structures
       const patientsData = response.data || response;
       setPatients(patientsData || []);
     } catch (err) {
-      setError('Failed to load patients');
+      setError(t("loadError"));
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (
-    patientId: string,
-    patientName: string
-  ): Promise<void> => {
-    if (window.confirm(`Are you sure you want to delete ${patientName}?`)) {
+  const handleDelete = async (patientId: string, patientName: string): Promise<void> => {
+    if (window.confirm(t("confirmDelete", { name: patientName }))) {
       try {
         await patientAPI.delete(patientId);
-        loadPatients(); // Reload the list
+        loadPatients();
       } catch (err) {
-        setError('Failed to delete patient');
+        setError(t("deleteError"));
         console.error(err);
       }
     }
@@ -60,7 +58,7 @@ const PatientList = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        Loading patients...
+        {t("loading")}
       </div>
     );
   }
@@ -69,19 +67,20 @@ const PatientList = () => {
     <>
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Patient List</h1>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+
           {isAuthenticated ? (
             <button
               onClick={handleAddNew}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Add New Patient
+              {t("addNew")}
             </button>
           ) : (
             <div className="guest-notice">
-              <p>Sign up to create and manage patient records</p>
+              <p>{t("guestMessage")}</p>
               <button onClick={showSignupPopup} className="guest-action-button">
-                Get Started
+                {t("getStarted")}
               </button>
             </div>
           )}
@@ -93,82 +92,46 @@ const PatientList = () => {
           </div>
         )}
 
-        {patients && patients.length > 0 ? (
+        {length > 0 ? (
           <div className="bg-white shadow-md rounded-lg overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date of Birth
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  {isAuthenticated && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  )}
+                  <th className="th">{t("name")}</th>
+                  <th className="th">{t("id")}</th>
+                  <th className="th">{t("dob")}</th>
+                  <th className="th">{t("phone")}</th>
+                  <th className="th">{t("email")}</th>
+                  {isAuthenticated && <th className="th">{t("actions")}</th>}
                 </tr>
               </thead>
+
               <tbody className="bg-white divide-y divide-gray-200">
                 {patients.map(patient => (
                   <tr key={patient.demographic_no} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Link
-                        to={`/patients/${patient.demographic_no}`}
-                        className="text-blue-600 hover:text-blue-900 font-medium"
-                      >
+                    <td className="td">
+                      <Link to={`/patients/${patient.demographic_no}`} className="text-blue-600 hover:text-blue-900 font-medium">
                         {patient.first_name} {patient.last_name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {patient.demographic_no}
+                    <td className="td">{patient.demographic_no}</td>
+                    <td className="td">
+                      {patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {patient.date_of_birth
-                        ? new Date(patient.date_of_birth).toLocaleDateString()
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {patient.phone || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {patient.email || '-'}
-                    </td>
+                    <td className="td">{patient.phone || '-'}</td>
+                    <td className="td">{patient.email || '-'}</td>
+
                     {isAuthenticated && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="td">
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() =>
-                              patient.demographic_no &&
-                              handleEdit(patient.demographic_no)
-                            }
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
+                          <button onClick={() => handleEdit(patient.demographic_no!)} className="text-indigo-600 hover:text-indigo-900">
+                            {t("edit")}
                           </button>
                           <button
-                            onClick={() => {
-                              if (patient.demographic_no) {
-                                handleDelete(
-                                  patient.demographic_no,
-                                  `${patient.first_name} ${patient.last_name}`
-                                );
-                              }
-                            }}
+                            onClick={() => handleDelete(patient.demographic_no!, `${patient.first_name} ${patient.last_name}`)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       </td>
@@ -176,29 +139,26 @@ const PatientList = () => {
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">No patients found</p>
+            <p className="text-gray-500 mb-4">{t("empty")}</p>
+
             {isAuthenticated ? (
-              <button
-                onClick={handleAddNew}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Add Your First Patient
+              <button onClick={handleAddNew} className="btn-primary">
+                {t("addFirst")}
               </button>
             ) : (
-              <button
-                onClick={showSignupPopup}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Sign Up to Add Patients
+              <button onClick={showSignupPopup} className="btn-primary">
+                {t("signupToAdd")}
               </button>
             )}
           </div>
         )}
       </div>
+
       <SignupPopup isOpen={isPopupOpen} onClose={hideSignupPopup} />
     </>
   );

@@ -1,10 +1,26 @@
-import { useState } from "react";
+// Sidebar.tsx (updated with comments explaining changes)
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { usePluginWidgets } from "../hooks/usePluginWidgets";
 import logger from "../services/logging";
 import "./Sidebar.css";
+import authService from "../services/auth";
 import { useUser } from "./UserContext";
-import { useTranslation } from "react-i18next"; // 🌍 i18n
+import { useTranslation } from "react-i18next";
+import { appointmentService } from "../services/appointments";
+
+// Utility functions (assuming they are defined elsewhere; if not, you can define them here)
+const is_today = (dateString: string) => {
+  const today = new Date().toISOString().split("T")[0];
+  return dateString === today;
+};
+
+const is_in_past = (dateTime: Date) => {
+  const now = new Date();
+  return dateTime < now;
+};
+
+const isAuthenticated = authService.isAuthenticated();
 
 const Sidebar = () => {
   const { user, isLoading } = useUser();
@@ -12,10 +28,55 @@ const Sidebar = () => {
   const widgets = usePluginWidgets();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t } = useTranslation();
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   logger.debug("Sidebar user:", user);
 
+  // MODIFICATION: Extracted fetchAppointments into a reusable function for easier calling
+  const fetchAppointments = async () => {
+    if (isAuthenticated) {
+      const user = authService.getUser();
+      const userId = user?.id?.split(":")[1] || user?.id;
+      console.log("Current User ID:", userId);
+      const response = await appointmentService.getAppointments(userId);
+      console.log("appointments", response);
+      setAppointments(response.appointments || []);
+    }
+  };
+
+  // Fetch appointments on mount and when authenticated changes
+  useEffect(() => {
+    fetchAppointments();
+  }, [isAuthenticated]);
+
+  // MODIFICATION: Added event listener for 'appointmentCreated' event to refresh appointments
+  // This listens for the custom event dispatched from Schedule.tsx when a new appointment is created,
+  // ensuring the Sidebar updates its remaining appointments count in real-time
+  useEffect(() => {
+    const handleAppointmentCreated = () => {
+      console.log("Appointment created event received, refreshing sidebar...");
+      fetchAppointments();
+    };
+
+    window.addEventListener("appointmentCreated", handleAppointmentCreated);
+
+    return () => {
+      window.removeEventListener(
+        "appointmentCreated",
+        handleAppointmentCreated
+      );
+    };
+  }, []);
+
   if (isLoading) return null;
+
+  // Calculate remaining appointments for today
+  const remainingToday = appointments.filter((apt: any) => {
+    const aptDate = apt.appointment_date;
+    const aptTime = apt.start_time;
+    const aptDateTime = new Date(`${aptDate}T${aptTime}`);
+    return is_today(aptDate) && !is_in_past(aptDateTime);
+  }).length;
 
   return (
     <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
@@ -33,7 +94,6 @@ const Sidebar = () => {
 
       <nav className={isCollapsed ? "collapsed" : ""}>
         <ul>
-          {/* 🏠 Dashboard */}
           <li>
             <NavLink
               to="/"
@@ -44,7 +104,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 🔧 Admin / Organization */}
           {(userType === "administrator" ||
             userType === "superadmin" ||
             userType === "admin") && (
@@ -71,11 +130,10 @@ const Sidebar = () => {
             </>
           )}
 
-          {/* 🩺 Patient-specific routes */}
           {userType === "patient" ? (
             <>
-              <li>
-                {user?.id && (
+              {user?.id && (
+                <li>
                   <NavLink
                     to={`/intake/${user.id}`}
                     className={({ isActive }) => (isActive ? "active" : "")}
@@ -83,8 +141,8 @@ const Sidebar = () => {
                   >
                     {isCollapsed ? "📝" : t("intakeForm")}
                   </NavLink>
-                )}
-              </li>
+                </li>
+              )}
               <li>
                 <NavLink
                   to="/health-metrics"
@@ -118,7 +176,6 @@ const Sidebar = () => {
             </>
           )}
 
-          {/* 🔬 Lab Results */}
           <li>
             <NavLink
               to="/lab-results"
@@ -129,7 +186,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 💬 Messages */}
           <li>
             <NavLink
               to="/messages"
@@ -140,7 +196,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 📅 Schedule */}
           <li>
             <NavLink
               to="/schedule"
@@ -151,7 +206,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* ⚙️ Settings */}
           <li>
             <NavLink
               to="/settings"
@@ -162,7 +216,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 📁 Uploads */}
           <li>
             <NavLink
               to="/uploads"
@@ -173,7 +226,6 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* 🔧 Plugin Widgets */}
           {widgets.map((widget) => (
             <li key={widget.name}>
               <NavLink
@@ -186,7 +238,6 @@ const Sidebar = () => {
             </li>
           ))}
 
-          {/* 📝 Notes */}
           <li>
             <NavLink
               to="/notes"
@@ -206,11 +257,7 @@ const Sidebar = () => {
             <h4>
               {t("hello")}, {user?.username}
             </h4>
-            <p>
-              {t("remainingAppointments", {
-                count: user?.appointments || 0,
-              })}
-            </p>
+            <p>{t("remainingAppointments", { count: remainingToday })}</p>
           </div>
         </div>
       )}

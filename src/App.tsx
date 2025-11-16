@@ -30,6 +30,7 @@ import {
   NotificationProvider,
   useNotificationContext,
 } from './components/NotificationContext';
+
 import PatientIntakeForm from './components/PatientIntakeForm';
 import Settings from './components/Settings';
 import { UserProvider } from './components/UserContext';

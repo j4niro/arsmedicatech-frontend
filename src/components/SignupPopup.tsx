@@ -4,6 +4,7 @@ import authService from '../services/auth';
 import GoogleAuthButton from './GoogleAuthButton';
 import RoleSelect from './RoleSelect';
 import './SignupPopup.css';
+import { useTranslation } from "react-i18next";
 
 interface SignupPopupProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const SignupPopup = ({
   onSwitchToLogin,
 }: SignupPopupProps): JSX.Element | null => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [role, setRole] = useState('patient');
 
   if (!isOpen) return null;
@@ -50,45 +52,46 @@ const SignupPopup = ({
         <div className="popup-content">
           <div className="popup-icon">🔒</div>
 
-          <h2>Sign Up to Continue</h2>
+          <h2>{t("Sign Up to Continue")}</h2>
 
           <p className="popup-description">
-            You need to create an account to perform this action. Sign up now to
-            unlock all features and start managing your patients.
+            {t("You need to create an account to perform this action. Sign up now to unlock all features and start managing your patients.")}
           </p>
 
           <div className="popup-benefits">
             <div className="benefit-item">
               <span className="benefit-icon">✓</span>
-              <span>Create and manage patient records</span>
+              <span>{t("Create and manage patient records")}</span>
             </div>
             <div className="benefit-item">
               <span className="benefit-icon">✓</span>
-              <span>Send and receive messages</span>
+              <span>{t("Send and receive messages")}</span>
             </div>
             <div className="benefit-item">
               <span className="benefit-icon">✓</span>
-              <span>Schedule appointments</span>
+              <span>{t("Schedule appointments")}</span>
             </div>
             <div className="benefit-item">
               <span className="benefit-icon">✓</span>
-              <span>Access advanced features</span>
+              <span>{t("Access advanced features")}</span>
             </div>
           </div>
 
           <div className="popup-actions">
             <RoleSelect value={role} onChange={handleRoleChange} />
+
             <GoogleAuthButton onClick={handleGoogleSignup}>
-              Sign up with Google
+              {t("Sign up with Google")}
             </GoogleAuthButton>
+
             <button className="popup-signup-button" onClick={handleSignupClick}>
-              Sign Up Now
+              {t("Sign Up Now")}
             </button>
 
             <div className="popup-login-link">
-              Already have an account?{' '}
+              {t("Already have an account?")}{" "}
               <button className="popup-login-button" onClick={handleLoginClick}>
-                Sign In
+                {t("Sign In")}
               </button>
             </div>
           </div>

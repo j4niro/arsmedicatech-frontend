@@ -66,7 +66,6 @@ class AppointmentService {
     if (params?.provider_id)
       queryParams.append('provider_id', params.provider_id);
     if (params?.status) queryParams.append('status', params.status);
-
     const response = await apiService.getAPI(
       `${this.baseUrl}?${queryParams.toString()}`
     );

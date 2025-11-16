@@ -1,5 +1,6 @@
 import React from 'react';
 import './ToolUsageModal.css';
+import { useTranslation } from "react-i18next";
 
 interface ToolUsageModalProps {
   isOpen: boolean;
@@ -12,13 +13,15 @@ const ToolUsageModal: React.FC<ToolUsageModalProps> = ({
   onClose,
   usedTools,
 }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
     <div className="tool-usage-modal-overlay" onClick={onClose}>
       <div className="tool-usage-modal" onClick={e => e.stopPropagation()}>
         <div className="tool-usage-modal-header">
-          <h3>Tools Used</h3>
+          <h3>{t("Tools Used")}</h3>
           <button className="tool-usage-modal-close" onClick={onClose}>
             ×
           </button>
@@ -34,7 +37,7 @@ const ToolUsageModal: React.FC<ToolUsageModalProps> = ({
             </ul>
           ) : (
             <p className="no-tools-used">
-              No tools were used in this response.
+              {t("No tools were used in this response.")}
             </p>
           )}
         </div>

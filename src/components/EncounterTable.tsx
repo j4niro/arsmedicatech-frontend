@@ -2,11 +2,11 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import React from 'react';
-import { EncounterType } from '../types';
+} from "@tanstack/react-table";
+import React from "react";
+import { EncounterType } from "../types";
+import { useTranslation } from "react-i18next";
 
-/** Encounter table component for displaying encounter data with CRUD actions */
 export function EncounterTable({
   encounters,
   isLoading = false,
@@ -22,82 +22,42 @@ export function EncounterTable({
   onView?: (encounter: EncounterType) => void;
   onRowClick?: (encounter: EncounterType) => void;
 }) {
+  const { t } = useTranslation();
+
   const columns = React.useMemo(
     () => [
-      { accessorKey: 'note_id', header: 'Note ID' },
+      { accessorKey: "note_id", header: t("noteId") },
       {
-        accessorKey: 'date_created',
-        header: 'Visit Date',
+        accessorKey: "date_created",
+        header: t("visitDate"),
         cell: (ctx: any) => {
           const value = ctx.getValue();
-          return value ? new Date(value).toLocaleDateString() : '-';
+          return value ? new Date(value).toLocaleDateString() : "-";
         },
       },
-      { accessorKey: 'provider_id', header: 'Provider' },
+      { accessorKey: "provider_id", header: t("provider") },
       {
-        accessorKey: 'note_text',
-        header: 'Notes',
+        accessorKey: "note_text",
+        header: t("notes"),
         cell: (ctx: any) => {
           const value = ctx.getValue();
-          const row = ctx.row.original;
-          const noteType = row.note_type;
-
-          // Check if it's SOAP notes based on note_type field or object structure
-          if (
-            noteType === 'soap' ||
-            (typeof value === 'object' &&
-              value !== null &&
-              'subjective' in value &&
-              'objective' in value &&
-              'assessment' in value &&
-              'plan' in value)
-          ) {
-            // Helper function to format text with preserved newlines
-            const formatText = (text: string) => {
-              if (!text) return '-';
-              // Replace escaped newlines with actual newlines and truncate for table view
-              const formatted = text.replace(/\\n/g, '\n');
-              return formatted.length > 50
-                ? `${formatted.substring(0, 50)}...`
-                : formatted;
-            };
-
-            return (
-              <div className="text-xs">
-                <div>
-                  <strong>S:</strong> {formatText(value.subjective || '')}
-                </div>
-                <div>
-                  <strong>O:</strong> {formatText(value.objective || '')}
-                </div>
-                <div>
-                  <strong>A:</strong> {formatText(value.assessment || '')}
-                </div>
-                <div>
-                  <strong>P:</strong> {formatText(value.plan || '')}
-                </div>
-              </div>
-            );
-          }
-          return value
-            ? value.length > 100
-              ? `${value.substring(0, 100)}...`
-              : value
-            : '-';
+          return typeof value === "string" && value.length > 80
+            ? value.substring(0, 80) + "..."
+            : value || "-";
         },
       },
       {
-        accessorKey: 'diagnostic_codes',
-        header: 'Diagnostic Codes',
+        accessorKey: "diagnostic_codes",
+        header: t("diagnosticCodes"),
         cell: (ctx: any) => {
           const value = ctx.getValue();
-          return value && Array.isArray(value) ? value.join(', ') : '-';
+          return value && Array.isArray(value) ? value.join(", ") : "-";
         },
       },
-      { accessorKey: 'status', header: 'Status' },
+      { accessorKey: "status", header: t("status") },
       {
-        id: 'actions',
-        header: 'Actions',
+        id: "actions",
+        header: t("actions"),
         cell: (ctx: any) => {
           const encounter = ctx.row.original;
           return (
@@ -108,9 +68,9 @@ export function EncounterTable({
                     e.stopPropagation();
                     onView(encounter);
                   }}
-                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-3 py-1 bg-blue-500 text-white rounded"
                 >
-                  View
+                  {t("view")}
                 </button>
               )}
               {onEdit && (
@@ -119,9 +79,9 @@ export function EncounterTable({
                     e.stopPropagation();
                     onEdit(encounter);
                   }}
-                  className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  className="px-3 py-1 bg-yellow-500 text-white rounded"
                 >
-                  Edit
+                  {t("edit")}
                 </button>
               )}
               {onDelete && (
@@ -130,9 +90,9 @@ export function EncounterTable({
                     e.stopPropagation();
                     onDelete(encounter);
                   }}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                  className="px-3 py-1 bg-red-500 text-white rounded"
                 >
-                  Delete
+                  {t("delete")}
                 </button>
               )}
             </div>
@@ -140,7 +100,7 @@ export function EncounterTable({
         },
       },
     ],
-    [onEdit, onDelete, onView]
+    [t, onEdit, onDelete, onView]
   );
 
   const table = useReactTable({
@@ -149,13 +109,9 @@ export function EncounterTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (isLoading) {
-    return <p className="p-4">Loading encounters...</p>;
-  }
-
-  if (!encounters || encounters.length === 0) {
-    return <p className="p-4 text-gray-500">No encounters found.</p>;
-  }
+  if (isLoading) return <p className="p-4">{t("loadingEncounters")}</p>;
+  if (!encounters || encounters.length === 0)
+    return <p className="p-4 text-gray-500">{t("noEncounters")}</p>;
 
   return (
     <div className="overflow-x-auto">
@@ -164,31 +120,23 @@ export function EncounterTable({
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map(header => (
-                <th
-                  key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
+                <th key={header.id} className="px-6 py-3 text-xs font-medium text-gray-500 uppercase">
+                  {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
+
         <tbody className="bg-white divide-y divide-gray-200">
           {table.getRowModel().rows.map(row => (
             <tr
               key={row.id}
-              className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
-              onClick={() => onRowClick && onRowClick(row.original)}
+              onClick={() => onRowClick?.(row.original)}
+              className={`${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
             >
               {row.getVisibleCells().map(cell => (
-                <td
-                  key={cell.id}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                >
+                <td key={cell.id} className="px-6 py-4 text-sm">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

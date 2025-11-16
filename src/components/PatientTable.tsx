@@ -4,9 +4,9 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import React from 'react';
+import { useTranslation } from "react-i18next";
 import { EncounterType, PatientType } from '../types';
 
-/** Dumb presentational component for search results */
 export function SearchResultsTable({
   rows,
   isLoading = false,
@@ -16,23 +16,22 @@ export function SearchResultsTable({
   isLoading?: boolean;
   onRowClick?: (item: PatientType | EncounterType) => void;
 }) {
-  /** Column definition only runs once */
+
+  const { t } = useTranslation();
+
   const columns = React.useMemo(
     () => [
       {
         id: 'patient_name',
-        header: 'Patient Name',
+        header: t("patientName"),
         cell: (ctx: any) => {
           const item = ctx.row.original;
-          // Handle both patient and encounter search results
           if ('patient' in item && item.patient) {
-            // This is an encounter result
             return (
               `${item.patient.first_name || ''} ${item.patient.last_name || ''}`.trim() ||
               '-'
             );
           } else {
-            // This is a direct patient result
             return (
               `${item.first_name || ''} ${item.last_name || ''}`.trim() || '-'
             );
@@ -41,45 +40,33 @@ export function SearchResultsTable({
       },
       {
         id: 'patient_dob',
-        header: 'Date of Birth',
+        header: t("dob"),
         cell: (ctx: any) => {
           const item = ctx.row.original;
-          let dob = null;
-
-          if ('patient' in item && item.patient) {
-            // This is an encounter result
-            dob = item.patient.date_of_birth;
-          } else {
-            // This is a direct patient result
-            dob = item.date_of_birth;
-          }
-
+          const dob =
+            'patient' in item && item.patient ? item.patient.date_of_birth : item.date_of_birth;
           return dob ? new Date(dob).toLocaleDateString() : '-';
         },
       },
       {
         id: 'visit_date',
-        header: 'Visit Date',
-        cell: (ctx: any) => {
-          const item = ctx.row.original;
-          // Only show visit date for encounter results
-          if ('date_created' in item) {
-            return item.date_created
-              ? new Date(item.date_created).toLocaleDateString()
-              : '-';
-          }
-          return '-';
-        },
+        header: t("visitDate"),
+        cell: (ctx: any) =>
+          'date_created' in ctx.row.original
+            ? (ctx.row.original.date_created
+                ? new Date(ctx.row.original.date_created).toLocaleDateString()
+                : '-')
+            : '-',
       },
       {
         accessorKey: 'highlighted_note',
-        header: 'Snippet',
+        header: t("snippet"),
         cell: (ctx: any): JSX.Element => (
           <div dangerouslySetInnerHTML={{ __html: ctx.getValue() || '' }} />
         ),
       },
     ],
-    []
+    [t]
   );
 
   const table = useReactTable({
@@ -88,9 +75,7 @@ export function SearchResultsTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (isLoading) {
-    return <p className="p-4">Loading…</p>;
-  }
+  if (isLoading) return <p className="p-4">{t("loading")}</p>;
 
   return (
     <table className="min-w-full text-sm">
@@ -99,15 +84,13 @@ export function SearchResultsTable({
           <tr key={hg.id}>
             {hg.headers.map(header => (
               <th key={header.id} className="px-4 py-2">
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext()
-                )}
+                {flexRender(header.column.columnDef.header, header.getContext())}
               </th>
             ))}
           </tr>
         ))}
       </thead>
+
       <tbody className="divide-y divide-gray-200">
         {table.getRowModel().rows.map(row => (
           <tr
@@ -127,7 +110,6 @@ export function SearchResultsTable({
   );
 }
 
-/** Patient table component for displaying patient data with CRUD actions */
 export function PatientTable({
   patients,
   isLoading = false,
@@ -145,70 +127,47 @@ export function PatientTable({
   onRowClick?: (patient: PatientType) => void;
   onSelect?: (patient: PatientType) => void;
 }) {
+
+  const { t } = useTranslation();
+
   const columns = React.useMemo(
     () => [
-      { accessorKey: 'demographic_no', header: 'ID' },
-      { accessorKey: 'first_name', header: 'First Name' },
-      { accessorKey: 'last_name', header: 'Last Name' },
+      { accessorKey: 'demographic_no', header: t("id") },
+      { accessorKey: 'first_name', header: t("firstName") },
+      { accessorKey: 'last_name', header: t("lastName") },
       {
         accessorKey: 'date_of_birth',
-        header: 'Date of Birth',
-        cell: (ctx: any) => {
-          const value = ctx.getValue();
-          return value ? new Date(value).toLocaleDateString() : '-';
-        },
+        header: t("dob"),
+        cell: (ctx: any) =>
+          ctx.getValue() ? new Date(ctx.getValue()).toLocaleDateString() : '-',
       },
-      { accessorKey: 'phone', header: 'Phone' },
-      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'phone', header: t("phone") },
+      { accessorKey: 'email', header: t("email") },
       {
         id: 'actions',
-        header: 'Actions',
+        header: t("actions"),
         cell: (ctx: any) => {
           const patient = ctx.row.original;
           return (
             <div className="flex space-x-2">
               {onSelect && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onSelect(patient);
-                  }}
-                  className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-                >
-                  Select
+                <button onClick={(e) => { e.stopPropagation(); onSelect(patient); }} className="btn-green">
+                  {t("select")}
                 </button>
               )}
               {onView && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onView(patient);
-                  }}
-                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  View
+                <button onClick={(e) => { e.stopPropagation(); onView(patient); }} className="btn-blue">
+                  {t("view")}
                 </button>
               )}
               {onEdit && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onEdit(patient);
-                  }}
-                  className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                >
-                  Edit
+                <button onClick={(e) => { e.stopPropagation(); onEdit(patient); }} className="btn-yellow">
+                  {t("edit")}
                 </button>
               )}
               {onDelete && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onDelete(patient);
-                  }}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Delete
+                <button onClick={(e) => { e.stopPropagation(); onDelete(patient); }} className="btn-red">
+                  {t("delete")}
                 </button>
               )}
             </div>
@@ -216,38 +175,23 @@ export function PatientTable({
         },
       },
     ],
-    [onEdit, onDelete, onView, onSelect]
+    [t, onEdit, onDelete, onView, onSelect]
   );
 
-  const table = useReactTable({
-    data: patients,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+  const table = useReactTable({ data: patients, columns, getCoreRowModel: getCoreRowModel() });
 
-  if (isLoading) {
-    return <p className="p-4">Loading patients...</p>;
-  }
-
-  if (!patients || patients.length === 0) {
-    return <p className="p-4 text-gray-500">No patients found.</p>;
-  }
+  if (isLoading) return <p className="p-4">{t("loading")}</p>;
+  if (!patients.length) return <p className="p-4 text-gray-500">{t("empty")}</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th
-                  key={header.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
+          {table.getHeaderGroups().map(hg => (
+            <tr key={hg.id}>
+              {hg.headers.map(header => (
+                <th key={header.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
             </tr>
@@ -255,16 +199,9 @@ export function PatientTable({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {table.getRowModel().rows.map(row => (
-            <tr
-              key={row.id}
-              className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
-              onClick={() => onRowClick && onRowClick(row.original)}
-            >
+            <tr key={row.id} className="hover:bg-gray-50" onClick={() => onRowClick && onRowClick(row.original)}>
               {row.getVisibleCells().map(cell => (
-                <td
-                  key={cell.id}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                >
+                <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

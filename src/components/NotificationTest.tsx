@@ -1,37 +1,36 @@
 import React, { useState } from 'react';
+import { useTranslation } from "react-i18next";
 import { API_URL } from '../env_vars';
 
 const NotificationTest: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string>('');
 
   const testSSE = async () => {
     try {
-      setStatus('Testing SSE...');
+      setStatus(t("testingSSE"));
       const response = await fetch(`${API_URL}/api/sse`, {
         method: 'GET',
         credentials: 'include',
       });
 
       if (response.ok) {
-        setStatus('SSE test event sent! Check console for notifications.');
+        setStatus(t("sseTestSuccess"));
       } else {
-        setStatus('SSE test failed. Make sure you are logged in.');
+        setStatus(t("sseTestFailed"));
       }
     } catch (error) {
-      setStatus(`SSE test error: ${error}`);
+      setStatus(`SSE error: ${error}`);
     }
   };
 
   const testAppointmentReminder = async () => {
     try {
-      setStatus('Sending appointment reminder...');
-      // This would be a real endpoint in production
+      setStatus(t("appointmentSending"));
       const response = await fetch(`${API_URL}/api/test/appointment-reminder`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: 'test-123',
           time: new Date().toISOString(),
@@ -40,19 +39,19 @@ const NotificationTest: React.FC = () => {
       });
 
       if (response.ok) {
-        setStatus('Appointment reminder sent!');
+        setStatus(t("appointmentSent"));
       } else {
-        setStatus('Appointment reminder test failed.');
+        setStatus(t("appointmentFailed"));
       }
     } catch (error) {
-      setStatus(`Appointment reminder error: ${error}`);
+      setStatus(`Error: ${error}`);
     }
   };
 
   return (
     <div style={{ padding: '20px', border: '1px solid #ccc', margin: '10px' }}>
-      <h3>SSE Notification Test</h3>
-      <p>Use these buttons to test the Server-Sent Events functionality:</p>
+      <h3>{t("sseNotificationTest")}</h3>
+      <p>{t("useButtonsToTestSSE")}</p>
 
       <div style={{ marginBottom: '10px' }}>
         <button
@@ -67,7 +66,7 @@ const NotificationTest: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Test SSE Message
+          {t("testSSEMessage")}
         </button>
 
         <button
@@ -81,7 +80,7 @@ const NotificationTest: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Test Appointment Reminder
+          {t("testAppointmentReminder")}
         </button>
       </div>
 
@@ -94,18 +93,16 @@ const NotificationTest: React.FC = () => {
             borderRadius: '4px',
           }}
         >
-          <strong>Status:</strong> {status}
+          <strong>{t("status")}:</strong> {status}
         </div>
       )}
 
       <div style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
-        <p>
-          <strong>Instructions:</strong>
-        </p>
+        <p><strong>{t("instructions")}</strong></p>
         <ul>
-          <li>Make sure you are logged in</li>
-          <li>Open the browser console to see event logs</li>
-          <li>Check the Messages page to see real-time updates</li>
+          <li>{t("makeSureLoggedIn")}</li>
+          <li>{t("openConsoleToSeeEvents")}</li>
+          <li>{t("checkMessagesRealTime")}</li>
         </ul>
       </div>
     </div>

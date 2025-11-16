@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import Calendar from 'react-calendar';
-import { Value } from 'react-calendar/dist/esm/shared/types.js';
-import AppointmentForm from '../components/AppointmentForm';
-import SignupPopup from '../components/SignupPopup';
-import { useSignupPopup } from '../hooks/useSignupPopup';
-import { appointmentService } from '../services/appointments';
-import authService from '../services/auth';
-import logger from '../services/logging';
-import './Schedule.css';
+// Schedule.tsx (updated with comments explaining changes)
+import React, { useEffect, useState } from "react";
+import Calendar from "react-calendar";
+import { Value } from "react-calendar/dist/esm/shared/types.js";
+import AppointmentForm from "../components/AppointmentForm";
+import SignupPopup from "../components/SignupPopup";
+import { useSignupPopup } from "../hooks/useSignupPopup";
+import { appointmentService } from "../services/appointments";
+import authService from "../services/auth";
+import logger from "../services/logging";
+import "./Schedule.css";
 
 interface Appointment {
   id: string;
@@ -42,12 +43,15 @@ const Schedule = () => {
     const loadAppointments = async () => {
       if (isAuthenticated) {
         try {
-          logger.debug('Loading appointments from backend...');
-          const response = await appointmentService.getAppointments();
-          logger.debug('Backend appointments response:', response);
+          logger.debug("Loading appointments from backend...");
+          const user = authService.getUser();
+          const userId = user?.id?.split(":")[1] || user?.id;
+          console.log("Current User ID:", userId);
+          const response = await appointmentService.getAppointments(userId);
+          logger.debug("Backend appointments response:", response);
 
           // Convert backend appointments to frontend format
-          const convertedAppointments = response.appointments.map(apt => ({
+          const convertedAppointments = response.appointments.map((apt) => ({
             id: apt.id,
             patientName: `Patient ${apt.patient_id}`, // We'll need to get actual patient names later
             appointmentDate: apt.appointment_date,
@@ -58,10 +62,11 @@ const Schedule = () => {
             notes: apt.notes,
             location: apt.location,
           }));
-          logger.debug('Converted appointments:', convertedAppointments);
+          console.log("appointments", appointments);
+          logger.debug("Converted appointments:", convertedAppointments);
           setAppointments(convertedAppointments);
         } catch (error) {
-          console.error('Error loading appointments:', error);
+          console.error("Error loading appointments:", error);
           // For now, keep using local appointments if backend fails
         }
       }
@@ -74,11 +79,11 @@ const Schedule = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated) {
-        logger.debug('Page became visible, refreshing appointments...');
+        logger.debug("Page became visible, refreshing appointments...");
         const loadAppointments = async () => {
           try {
             const response = await appointmentService.getAppointments();
-            const convertedAppointments = response.appointments.map(apt => ({
+            const convertedAppointments = response.appointments.map((apt) => ({
               id: apt.id,
               patientName: `Patient ${apt.patient_id}`,
               appointmentDate: apt.appointment_date,
@@ -89,25 +94,26 @@ const Schedule = () => {
               notes: apt.notes,
               location: apt.location,
             }));
+            console.log("appointments1", appointments);
             setAppointments(convertedAppointments);
           } catch (error) {
-            console.error('Error refreshing appointments:', error);
+            console.error("Error refreshing appointments:", error);
           }
         };
         loadAppointments();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isAuthenticated]);
 
   const handleCalendarChange = (
     value: Value,
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
-    logger.debug('Calendar change - value:', value);
+    logger.debug("Calendar change - value:", value);
 
     if (!isAuthenticated) {
       showSignupPopup();
@@ -123,7 +129,7 @@ const Schedule = () => {
       selectedDate = new Date();
     }
 
-    logger.debug('Setting selected date:', selectedDate);
+    logger.debug("Setting selected date:", selectedDate);
     setCalendarValue(selectedDate);
     setSelectedDate(selectedDate);
     setIsModalOpen(true);
@@ -131,23 +137,23 @@ const Schedule = () => {
 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const refreshAppointments = async () => {
     if (isAuthenticated) {
       try {
-        logger.debug('Refreshing appointments...');
+        logger.debug("Refreshing appointments...");
 
         const response = await appointmentService.getAppointments();
 
         if (!response.appointments || response.appointments.length === 0) {
-          logger.debug('No appointments returned from backend');
+          logger.debug("No appointments returned from backend");
           setAppointments([]);
           return;
         }
 
-        const convertedAppointments = response.appointments.map(apt => {
-          logger.debug('Converting appointment:', apt);
+        const convertedAppointments = response.appointments.map((apt) => {
+          logger.debug("Converting appointment:", apt);
           return {
             id: apt.id,
             patientName: `Patient ${apt.patient_id}`,
@@ -161,10 +167,10 @@ const Schedule = () => {
           };
         });
         setAppointments(convertedAppointments);
-        logger.debug('Appointments refreshed:', convertedAppointments);
+        logger.debug("Appointments refreshed:", convertedAppointments);
       } catch (error) {
-        console.error('Error refreshing appointments:', error);
-        console.error('Error details:', {
+        console.error("Error refreshing appointments:", error);
+        console.error("Error details:", {
           message: (error as Error).message,
           stack: (error as Error).stack,
           name: (error as Error).name,
@@ -174,14 +180,14 @@ const Schedule = () => {
   };
 
   const handleAppointmentSubmit = async (appointmentData: any) => {
-    logger.debug('Appointment submitted:', appointmentData);
+    logger.debug("Appointment submitted:", appointmentData);
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       // Convert frontend form data to backend format
       const backendData = {
-        patient_id: '1', // For now, use a default patient ID - we'll need to implement patient selection
+        patient_id: "1", // For now, use a default patient ID - we'll need to implement patient selection
         appointment_date: appointmentData.appointmentDate,
         start_time: appointmentData.startTime,
         end_time: appointmentData.endTime,
@@ -190,15 +196,19 @@ const Schedule = () => {
         location: appointmentData.location,
       };
 
-      logger.debug('Sending to backend:', backendData);
+      logger.debug("Sending to backend:", backendData);
 
       // Send to backend
       const newBackendAppointment =
         await appointmentService.createAppointment(backendData);
-      logger.debug('Backend response:', newBackendAppointment);
+      logger.debug("Backend response:", newBackendAppointment);
 
       // Refresh the appointments list from the backend
       await refreshAppointments();
+
+      // MODIFICATION: Dispatch custom event to notify Sidebar to refresh appointments
+      // This ensures the Sidebar updates its remaining appointments count when a new appointment is created
+      window.dispatchEvent(new CustomEvent('appointmentCreated'));
 
       setSelectedDate(null);
       setIsModalOpen(false);
@@ -207,23 +217,23 @@ const Schedule = () => {
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
-      console.error('Error creating appointment:', error);
-      setError('Failed to create appointment. Please try again.');
+      console.error("Error creating appointment:", error);
+      setError("Failed to create appointment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
-      const dayAppointments = appointments.filter(apt =>
+    if (view === "month") {
+      const dayAppointments = appointments.filter((apt) =>
         isSameDay(date, new Date(apt.appointmentDate))
       );
 
       if (dayAppointments.length > 0) {
         return (
           <div className="appointment-indicators">
-            {dayAppointments.slice(0, 3).map(apt => (
+            {dayAppointments.slice(0, 3).map((apt) => (
               <div
                 key={apt.id}
                 className={`appointment-dot appointment-${apt.status}`}
@@ -243,45 +253,45 @@ const Schedule = () => {
   };
 
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
+    if (view === "month") {
       const classes: string[] = [];
 
       // Check if this date has appointments
-      const dayAppointments = appointments.filter(apt =>
+      const dayAppointments = appointments.filter((apt) =>
         isSameDay(date, new Date(apt.appointmentDate))
       );
       if (dayAppointments.length > 0) {
-        classes.push('has-appointments');
+        classes.push("has-appointments");
       }
 
       // Check if this is the selected date
       if (selectedDate && isSameDay(date, selectedDate)) {
-        classes.push('selected-date');
+        classes.push("selected-date");
       }
 
-      return classes.length > 0 ? classes.join(' ') : null;
+      return classes.length > 0 ? classes.join(" ") : null;
     }
     return null;
   };
 
   const getAppointmentsForDate = (date: Date) => {
     return appointments
-      .filter(apt => isSameDay(date, new Date(apt.appointmentDate)))
+      .filter((apt) => isSameDay(date, new Date(apt.appointmentDate)))
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-500';
-      case 'cancelled':
-        return 'bg-red-500';
-      case 'completed':
-        return 'bg-blue-500';
-      case 'no_show':
-        return 'bg-gray-500';
+      case "confirmed":
+        return "bg-green-500";
+      case "cancelled":
+        return "bg-red-500";
+      case "completed":
+        return "bg-blue-500";
+      case "no_show":
+        return "bg-gray-500";
       default:
-        return 'bg-yellow-500';
+        return "bg-yellow-500";
     }
   };
 
@@ -309,10 +319,10 @@ const Schedule = () => {
               </button>
               <button
                 onClick={() => {
-                  logger.debug('New Appointment button clicked');
+                  logger.debug("New Appointment button clicked");
                   setSelectedDate(new Date());
                   setIsModalOpen(true);
-                  logger.debug('Modal should be open:', true);
+                  logger.debug("Modal should be open:", true);
                 }}
                 className="btn-primary"
               >
@@ -328,7 +338,7 @@ const Schedule = () => {
             value={calendarValue}
             tileContent={tileContent}
             tileClassName={tileClassName}
-            className={!isAuthenticated ? 'calendar-disabled' : ''}
+            className={!isAuthenticated ? "calendar-disabled" : ""}
           />
         </div>
 
@@ -337,7 +347,7 @@ const Schedule = () => {
           <div className="appointments-list">
             <h3>Appointments for {selectedDate.toLocaleDateString()}</h3>
             <div className="appointments-grid">
-              {getAppointmentsForDate(selectedDate).map(appointment => (
+              {getAppointmentsForDate(selectedDate).map((appointment) => (
                 <div key={appointment.id} className="appointment-card">
                   <div className="appointment-time">
                     {appointment.startTime} - {appointment.endTime}
@@ -399,7 +409,7 @@ const Schedule = () => {
       <AppointmentForm
         isOpen={isModalOpen}
         onClose={() => {
-          logger.debug('Modal closing');
+          logger.debug("Modal closing");
           setIsModalOpen(false);
           setSelectedDate(null);
         }}
@@ -409,21 +419,21 @@ const Schedule = () => {
       />
 
       {/* Debug info */}
-      {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === "development" && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             bottom: 10,
             right: 10,
-            background: 'white',
+            background: "white",
             padding: 10,
-            border: '1px solid #ccc',
-            fontSize: '12px',
+            border: "1px solid #ccc",
+            fontSize: "12px",
           }}
         >
           Modal Open: {isModalOpen.toString()}
           <br />
-          Selected Date: {selectedDate?.toDateString() || 'None'}
+          Selected Date: {selectedDate?.toDateString() || "None"}
           <br />
           Appointments: {appointments.length}
         </div>

@@ -12,14 +12,15 @@ import { useEffect, useState } from 'react';
 import { LIVE_KIT_SERVER_URL } from '../env_vars';
 import { videoAPI } from '../services/api';
 import { useUser } from './UserContext';
+import { useTranslation } from "react-i18next";
 
 function MyCustomControls({ roomName }: { roomName: string }) {
+  const { t } = useTranslation();
   const [egressId, setEgressId] = useState<string | null>(null);
 
   const handleStart = async () => {
     try {
       const res = await videoAPI.startRecording(roomName);
-      console.log('Started recording with ID:', res.egress_id);
       setEgressId(res.egress_id);
     } catch (e) {
       console.error('Start recording failed', e);
@@ -30,7 +31,6 @@ function MyCustomControls({ roomName }: { roomName: string }) {
     try {
       if (egressId) {
         await videoAPI.stopRecording(egressId);
-        console.log('Stopped recording with ID:', egressId);
         setEgressId(null);
       }
     } catch (e) {
@@ -45,7 +45,7 @@ function MyCustomControls({ roomName }: { roomName: string }) {
       <div
         style={{
           position: 'absolute',
-          bottom: '4rem', // Adjust depending on the bar height
+          bottom: '4rem',
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
@@ -57,14 +57,15 @@ function MyCustomControls({ roomName }: { roomName: string }) {
           onClick={handleStart}
           style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}
         >
-          Start Recording
+          {t("Start Recording")}
         </button>
+
         <button
           onClick={handleStop}
           disabled={!egressId}
           style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}
         >
-          Stop Recording
+          {t("Stop Recording")}
         </button>
       </div>
     </div>
@@ -72,54 +73,40 @@ function MyCustomControls({ roomName }: { roomName: string }) {
 }
 
 export default function VideoRoom() {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useUser();
   const [identity, setIdentity] = useState<string>();
-
   const [token, setToken] = useState<string>();
 
-  //const roomName = 'demo-room';
   const roomName = window.location.pathname.split('/').pop() || 'default-room';
 
-  // fetch a fresh JWT from Flask
   useEffect(() => {
-    // The AbortController is used to cancel the request if the component unmounts.
     const controller = new AbortController();
 
-    if (isAuthenticated && user) {
-      setIdentity(user.username);
-    } else {
-      setIdentity('guest-' + Math.random().toString(36).substring(2, 15));
-    }
+    setIdentity(
+      isAuthenticated && user
+        ? user.username
+        : 'guest-' + Math.random().toString(36).substring(2, 15)
+    );
 
     const fetchToken = async (identity: string) => {
       try {
-        const r = await videoAPI.getToken(
-          roomName,
-          identity,
-          controller.signal
-        );
+        const r = await videoAPI.getToken(roomName, identity, controller.signal);
         setToken(r.token);
       } catch (error) {
-        // If the request was aborted, we can safely ignore the error.
-        if (controller.signal.aborted) {
-          console.log('Token fetch was aborted.');
-          return;
+        if (!controller.signal.aborted) {
+          console.error("Failed to fetch token:", error);
         }
-        console.error('Failed to fetch token:', error);
       }
     };
 
     identity && fetchToken(identity);
 
-    // The cleanup function aborts the fetch request on unmount.
-    return () => {
-      controller.abort();
-    };
-  }, []); // Empty dependency array is correct here since roomName and identity are static.
+    return () => controller.abort();
+  }, [isAuthenticated, user, roomName]);
 
-  // A more explicit loading state
-  if (token === '') {
-    return <div>Getting token...</div>;
+  if (!token) {
+    return <div>{t("Getting token...")}</div>;
   }
 
   return (
@@ -128,8 +115,7 @@ export default function VideoRoom() {
       serverUrl={LIVE_KIT_SERVER_URL}
       data-lk-theme="default"
       style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-      // For a better experience we can handle disconnects
-      onDisconnected={() => console.log('Disconnected from room')}
+      onDisconnected={() => console.log('Disconnected')}
     >
       <div style={{ flex: 1, position: 'relative' }}>
         <MyVideoConference />

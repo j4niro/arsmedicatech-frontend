@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSignupPopup } from '../hooks/useSignupPopup';
+import { useTranslation } from 'react-i18next';
 import './ErrorModal.css';
 
 interface ErrorModalProps {
@@ -11,7 +12,6 @@ interface ErrorModalProps {
   onClose: () => void;
 }
 
-// Utility function to create error modal state
 export const createErrorModalState = (
   error: string,
   description: string,
@@ -25,28 +25,26 @@ export const createErrorModalState = (
 
 const ErrorModal: React.FC<ErrorModalProps> = ({
   error = 'Something went wrong',
-  description = 'An unknown error has occurred. Please return to the home screen. The error has been logged and is being investigated.',
+  description = 'An error occurred.',
   suggested_action,
   isOpen,
   onClose,
 }) => {
   const navigate = useNavigate();
   const { showSignupPopup } = useSignupPopup();
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
   const handleSuggestedAction = () => {
     onClose();
-
     switch (suggested_action) {
       case 'login':
         showSignupPopup();
-        // Set the auth parameter to show login form
         window.history.replaceState(null, '', '/?auth=login');
         break;
       case 'register':
         showSignupPopup();
-        // Set the auth parameter to show register form
         window.history.replaceState(null, '', '/?auth=register');
         break;
       case 'home':
@@ -59,12 +57,12 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
   const getActionButtonText = () => {
     switch (suggested_action) {
       case 'login':
-        return 'Login';
+        return t("login");
       case 'register':
-        return 'Sign Up';
+        return t("signUp");
       case 'home':
       default:
-        return 'Home';
+        return t("home");
     }
   };
 
@@ -73,13 +71,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
       <div className="error-modal">
         <div className="error-modal-header">
           <h3 className="error-modal-title">{error}</h3>
-          <button
-            className="error-modal-close"
-            onClick={onClose}
-            aria-label="Close error modal"
-          >
-            ×
-          </button>
+          <button className="error-modal-close" onClick={onClose}>×</button>
         </div>
 
         <div className="error-modal-body">
@@ -88,15 +80,12 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
 
         <div className="error-modal-footer">
           {suggested_action && (
-            <button
-              onClick={handleSuggestedAction}
-              className="error-modal-action-button"
-            >
+            <button onClick={handleSuggestedAction} className="error-modal-action-button">
               {getActionButtonText()}
             </button>
           )}
           <button onClick={onClose} className="error-modal-dismiss-button">
-            Dismiss
+            {t("dismiss")}
           </button>
         </div>
       </div>
